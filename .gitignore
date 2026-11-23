@@ -16,3 +16,5 @@ Thumbs.db
 # Signing (never commit keys)
 *.jks
 *.keystore
+*.p12
+*.p12.base64

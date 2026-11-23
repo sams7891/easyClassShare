@@ -8,6 +8,12 @@ every tablet in a classroom. **One app, two roles:**
 | 🚀 **SEND** | usually the teacher | Paste or type a link and send it to the whole class with one big button |
 | 📬 **RECEIVE** | the kids' tablets | Waits for links; each one shows up as a big card with a one-tap **Open** button |
 
+## 📲 Download & install
+Get the latest **`.apk`** from the
+[Releases page](https://github.com/sams7891/easyClassShare/releases/latest),
+open it on the tablet and tap **Install** (allow "install unknown apps" if asked).
+Install the same version on every tablet.
+
 ## How to use it in class
 1. Connect all tablets to the **same Wi-Fi** (or the teacher's phone hotspot).
 2. Kids tap **RECEIVE**. The teacher taps **SEND**, pastes a link and taps
@@ -49,8 +55,26 @@ app/src/main/java/com/easyclassshare/app/
 └── ui/                      # Home, Sender, Receiver screens + theme/components
 ```
 
+## Automatic builds (GitHub Actions)
+`.github/workflows/android.yml` runs the tests and builds a release APK on every
+push and pull request (downloadable under *Actions → run → Artifacts*).
+Pushing a tag `vX.Y.Z` also creates a **GitHub Release** with the APK attached.
+
+Release APKs are signed with the project key, provided via these repository
+secrets (*Settings → Secrets and variables → Actions*):
+
+| Secret | Value |
+|--------|-------|
+| `ANDROID_KEYSTORE_BASE64` | base64 of the PKCS#12 keystore file |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_ALIAS` | key alias |
+| `ANDROID_KEY_PASSWORD` | key password (same as keystore password for PKCS#12) |
+
+Never commit the keystore. Keep a backup: without it, updates can't be
+installed over the existing app.
+
 ## Versioning
 The project uses [Semantic Versioning](https://semver.org/) and git tags
 (`v1.0.0`, …). For a release: update `versionCode`/`versionName` in
 `app/build.gradle.kts`, add an entry to `CHANGELOG.md`, commit, then
-`git tag -a vX.Y.Z -m "..."`.
+`git tag -a vX.Y.Z -m "..."` and `git push origin main --tags`.
