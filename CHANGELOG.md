@@ -4,6 +4,11 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-11-23
+### Fixed
+- Release build: tolerate whitespace in the keystore secret and report
+  clearly which signing secret is wrong. (1.2.0 was never published.)
+
 ## [1.2.0] - 2026-11-23
 ### Added
 - GitHub Actions workflow: tests + signed release APK on every push;
