@@ -110,7 +110,7 @@ class ClassShareViewModel(application: Application) : AndroidViewModel(applicati
         listenJob = viewModelScope.launch {
             isListening = true
             try {
-                network.incoming().collect(::onMessage)
+                network.incoming().collect { onMessage(it) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
