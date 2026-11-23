@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Easy Class Share</string>
+
+    <!-- Home -->
+    <string name="step_pick_class">Pick your class animal</string>
+    <string name="step_pick_role">What do you want to do?</string>
+    <string name="role_send_title">SEND</string>
+    <string name="role_send_subtitle">Share a link with everyone</string>
+    <string name="role_receive_title">RECEIVE</string>
+    <string name="role_receive_subtitle">Get links from the teacher</string>
+    <string name="same_wifi_tip">💡 All tablets must be on the same Wi-Fi and pick the same animal.</string>
+
+    <!-- Rooms -->
+    <string name="room_fox">Fox</string>
+    <string name="room_panda">Panda</string>
+    <string name="room_frog">Frog</string>
+    <string name="room_lion">Lion</string>
+    <string name="room_octopus">Octopus</string>
+    <string name="room_unicorn">Unicorn</string>
+
+    <!-- Common -->
+    <string name="back">Back</string>
+
+    <!-- Sender -->
+    <string name="send_title">Send</string>
+    <string name="send_name_label">Your name</string>
+    <string name="send_name_hint">e.g. Ms. Lee</string>
+    <string name="send_what_label">What do you want to share?</string>
+    <string name="send_what_hint">Paste a link or type a short message…</string>
+    <string name="char_counter">%1$d / %2$d</string>
+    <string name="paste">📋 Paste</string>
+    <string name="clear">🧽 Clear</string>
+    <string name="detected_link">🔗 This is a link. Kids can open it with one tap!</string>
+    <string name="detected_text">💬 This is a message.</string>
+    <string name="send_button">🚀 Send to %1$s %2$s class!</string>
+    <string name="sending">✨ Sending…</string>
+    <string name="send_ok">🎉 Sent! Everyone in the %1$s %2$s class got it.</string>
+    <string name="send_failed">😕 Oops, could not send. Are you on Wi-Fi?</string>
+    <string name="sent_history_title">Already sent</string>
+    <string name="send_again">🔁 Send again</string>
+
+    <!-- Receiver -->
+    <string name="receive_title">Receive</string>
+    <string name="listening_title">Listening…</string>
+    <string name="listening_subtitle">Waiting for the %1$s %2$s class</string>
+    <string name="getting_ready">Getting ready…</string>
+    <string name="listen_error">😕 Can\'t listen right now. Check the Wi-Fi.</string>
+    <string name="try_again">Try again</string>
+    <string name="empty_title">Nothing here yet</string>
+    <string name="empty_subtitle">When your teacher sends something, it will pop up here!</string>
+    <string name="new_badge">NEW!</string>
+    <string name="default_sender">Your teacher</string>
+    <string name="open_link">🌐 Open</string>
+    <string name="copy">📋 Copy</string>
+    <string name="copied">Copied!</string>
+    <string name="could_not_open">Could not open this link</string>
+</resources>
