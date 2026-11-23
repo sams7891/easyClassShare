@@ -3,21 +3,13 @@
     <string name="app_name">Easy Class Share</string>
 
     <!-- Home -->
-    <string name="step_pick_class">Pick your class animal</string>
     <string name="step_pick_role">What do you want to do?</string>
     <string name="role_send_title">SEND</string>
     <string name="role_send_subtitle">Share a link with everyone</string>
     <string name="role_receive_title">RECEIVE</string>
     <string name="role_receive_subtitle">Get links from the teacher</string>
-    <string name="same_wifi_tip">💡 All tablets must be on the same Wi-Fi and pick the same animal.</string>
+    <string name="same_wifi_tip">💡 All tablets must be on the same Wi-Fi.</string>
 
-    <!-- Rooms -->
-    <string name="room_fox">Fox</string>
-    <string name="room_panda">Panda</string>
-    <string name="room_frog">Frog</string>
-    <string name="room_lion">Lion</string>
-    <string name="room_octopus">Octopus</string>
-    <string name="room_unicorn">Unicorn</string>
 
     <!-- Common -->
     <string name="back">Back</string>
@@ -33,9 +25,9 @@
     <string name="clear">🧽 Clear</string>
     <string name="detected_link">🔗 This is a link. Kids can open it with one tap!</string>
     <string name="detected_text">💬 This is a message.</string>
-    <string name="send_button">🚀 Send to %1$s %2$s class!</string>
+    <string name="send_button">🚀 Send to everyone!</string>
     <string name="sending">✨ Sending…</string>
-    <string name="send_ok">🎉 Sent! Everyone in the %1$s %2$s class got it.</string>
+    <string name="send_ok">🎉 Sent! Everyone on the Wi-Fi got it.</string>
     <string name="send_failed">😕 Oops, could not send. Are you on Wi-Fi?</string>
     <string name="sent_history_title">Already sent</string>
     <string name="send_again">🔁 Send again</string>
@@ -43,7 +35,7 @@
     <!-- Receiver -->
     <string name="receive_title">Receive</string>
     <string name="listening_title">Listening…</string>
-    <string name="listening_subtitle">Waiting for the %1$s %2$s class</string>
+    <string name="listening_subtitle">Waiting for your teacher</string>
     <string name="getting_ready">Getting ready…</string>
     <string name="listen_error">😕 Can\'t listen right now. Check the Wi-Fi.</string>
     <string name="try_again">Try again</string>

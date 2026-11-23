@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-11-23
+### Removed
+- Class "animal" picker: every Receive screen on the same Wi-Fi now gets
+  all messages. Message protocol bumped to v2 (no `room` field), so 1.0.0
+  and 1.1.0 tablets can't talk to each other; update all tablets together.
+
 ## [1.0.0] - 2026-11-23
 ### Added
 - Single app with two roles: **Send** and **Receive**.

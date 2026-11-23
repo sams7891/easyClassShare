@@ -7,14 +7,14 @@ import org.junit.Test
 class ShareMessageTest {
     @Test
     fun jsonRoundTrip() {
-        val original = ShareMessage(room = "fox", senderName = "Ms. Lee", content = "https://example.com")
+        val original = ShareMessage(senderName = "Ms. Lee", content = "https://example.com")
         assertEquals(original, ShareMessage.fromJson(original.toJson()))
     }
 
     @Test
     fun ignoresForeignOrBrokenPackets() {
         assertNull(ShareMessage.fromJson("not json"))
-        assertNull(ShareMessage.fromJson("""{"app":"other","id":"1","room":"fox","content":"x"}"""))
-        assertNull(ShareMessage.fromJson("""{"app":"easyClassShare","id":"1","room":"fox","content":""}"""))
+        assertNull(ShareMessage.fromJson("""{"app":"other","id":"1","content":"x"}"""))
+        assertNull(ShareMessage.fromJson("""{"app":"easyClassShare","id":"1","content":""}"""))
     }
 }

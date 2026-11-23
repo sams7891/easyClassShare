@@ -10,9 +10,7 @@ every tablet in a classroom. **One app, two roles:**
 
 ## How to use it in class
 1. Connect all tablets to the **same Wi-Fi** (or the teacher's phone hotspot).
-2. On every tablet, pick the **same class animal** (🦊 🐼 🐸 🦁 🐙 🦄).
-   Different classes on the same Wi-Fi just pick different animals.
-3. Kids tap **RECEIVE**. The teacher taps **SEND**, pastes a link and taps
+2. Kids tap **RECEIVE**. The teacher taps **SEND**, pastes a link and taps
    **🚀 Send**. A chime plays and the link pops up on every tablet.
 
 Tip: in Chrome, the teacher can tap *Share → Easy Class Share* to open the
@@ -20,7 +18,7 @@ Send screen with the link already filled in.
 
 ## How it works
 - No server, no accounts, no internet needed: messages are **UDP broadcasts**
-  on the local network (port `47474`), JSON-encoded (`ShareMessage`, protocol v1).
+  on the local network (port `47474`), JSON-encoded (`ShareMessage`, protocol v2).
 - Each message is sent 5× to survive dropped packets; receivers ignore
   duplicates by id. "Send again" re-sends with the same id, so only tablets
   that missed it will show it.
@@ -46,7 +44,7 @@ once (or let Android Studio generate it), then `./gradlew assembleDebug test`.
 app/src/main/java/com/easyclassshare/app/
 ├── MainActivity.kt          # single activity, screen switching, share intent
 ├── ClassShareViewModel.kt   # app state for both roles
-├── data/                    # ShareMessage, ClassRoom, LinkUtils
+├── data/                    # ShareMessage, LinkUtils
 ├── net/ClassNetwork.kt      # UDP broadcast send/receive
 └── ui/                      # Home, Sender, Receiver screens + theme/components
 ```

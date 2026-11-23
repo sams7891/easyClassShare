@@ -49,8 +49,6 @@ private fun EasyClassShareApp(vm: ClassShareViewModel) {
     Crossfade(targetState = vm.screen, label = "screen") { screen ->
         when (screen) {
             Screen.HOME -> HomeScreen(
-                room = vm.room,
-                onRoomSelected = vm::selectRoom,
                 onSendClick = { vm.screen = Screen.SEND },
                 onReceiveClick = { vm.screen = Screen.RECEIVE },
             )

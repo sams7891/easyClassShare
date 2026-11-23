@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.easyclassshare.app.data.ClassRoom
 import com.easyclassshare.app.data.ShareMessage
 import com.easyclassshare.app.net.ClassNetwork
 import kotlinx.coroutines.CancellationException
@@ -32,8 +31,6 @@ class ClassShareViewModel(application: Application) : AndroidViewModel(applicati
 
     var screen by mutableStateOf(Screen.HOME)
 
-    var room by mutableStateOf(ClassRoom.fromId(prefs.getString(KEY_ROOM, null)))
-        private set
     var senderName by mutableStateOf(prefs.getString(KEY_NAME, null).orEmpty())
         private set
 
@@ -53,11 +50,6 @@ class ClassShareViewModel(application: Application) : AndroidViewModel(applicati
         private set
     val received = mutableStateListOf<ShareMessage>()
 
-    fun selectRoom(newRoom: ClassRoom) {
-        room = newRoom
-        prefs.edit().putString(KEY_ROOM, newRoom.id).apply()
-    }
-
     fun updateSenderName(name: String) {
         val value = name.take(ShareMessage.MAX_NAME_LENGTH)
         senderName = value
@@ -75,7 +67,7 @@ class ClassShareViewModel(application: Application) : AndroidViewModel(applicati
     fun sendDraft() {
         val content = draft.trim()
         if (content.isEmpty()) return
-        val message = ShareMessage(room = room.id, senderName = senderName.trim(), content = content)
+        val message = ShareMessage(senderName = senderName.trim(), content = content)
         broadcast(message) {
             sent.add(0, message)
             draft = ""
@@ -127,7 +119,6 @@ class ClassShareViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun onMessage(message: ShareMessage) {
-        if (message.room != room.id) return // another class
         if (!seenIds.add(message.id)) return // duplicate copy
         received.add(0, message)
         tone?.startTone(ToneGenerator.TONE_PROP_ACK, 150)
@@ -139,7 +130,6 @@ class ClassShareViewModel(application: Application) : AndroidViewModel(applicati
 
     private companion object {
         const val PREFS_NAME = "easy_class_share"
-        const val KEY_ROOM = "room"
         const val KEY_NAME = "sender_name"
     }
 }

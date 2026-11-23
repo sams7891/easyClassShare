@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.ClassShareViewModel
 import com.easyclassshare.app.R
-import com.easyclassshare.app.data.ClassRoom
 import com.easyclassshare.app.data.LinkUtils
 import com.easyclassshare.app.data.ShareMessage
 import com.easyclassshare.app.ui.components.BigButton
@@ -87,7 +86,7 @@ fun ReceiverScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
     }
 
     Scaffold(
-        topBar = { KidTopBar(stringResource(R.string.receive_title), vm.room, ReceiveBlue, Color.White, onBack) },
+        topBar = { KidTopBar(stringResource(R.string.receive_title), ReceiveBlue, Color.White, onBack) },
     ) { padding ->
         LazyColumn(
             state = listState,
@@ -96,7 +95,7 @@ fun ReceiverScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item(key = "status") {
-                ListeningBanner(vm.isListening, vm.receiveError, vm.room, onRetry = vm::startListening)
+                ListeningBanner(vm.isListening, vm.receiveError, onRetry = vm::startListening)
             }
             if (vm.received.isEmpty()) {
                 item(key = "empty") { EmptyInbox() }
@@ -128,7 +127,7 @@ private fun openLink(context: Context, text: String, errorText: String) {
 }
 
 @Composable
-private fun ListeningBanner(isListening: Boolean, hasError: Boolean, room: ClassRoom, onRetry: () -> Unit) {
+private fun ListeningBanner(isListening: Boolean, hasError: Boolean, onRetry: () -> Unit) {
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
@@ -150,7 +149,7 @@ private fun ListeningBanner(isListening: Boolean, hasError: Boolean, room: Class
                     isListening -> {
                         Text(stringResource(R.string.listening_title), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            stringResource(R.string.listening_subtitle, room.emoji, stringResource(room.label)),
+                            stringResource(R.string.listening_subtitle),
                             style = MaterialTheme.typography.bodyLarge,
                         )
                     }

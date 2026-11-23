@@ -9,18 +9,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,16 +28,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.R
-import com.easyclassshare.app.data.ClassRoom
-import com.easyclassshare.app.ui.components.RoomPicker
 import com.easyclassshare.app.ui.theme.Ink
 import com.easyclassshare.app.ui.theme.ReceiveBlue
 import com.easyclassshare.app.ui.theme.SendOrange
 
 @Composable
 fun HomeScreen(
-    room: ClassRoom,
-    onRoomSelected: (ClassRoom) -> Unit,
     onSendClick: () -> Unit,
     onReceiveClick: () -> Unit,
 ) {
@@ -66,10 +59,11 @@ fun HomeScreen(
                     textAlign = TextAlign.Center,
                 )
 
-                StepTitle(1, stringResource(R.string.step_pick_class))
-                RoomPicker(selected = room, onSelect = onRoomSelected)
-
-                StepTitle(2, stringResource(R.string.step_pick_role))
+                Text(
+                    stringResource(R.string.step_pick_role),
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
+                )
                 RoleCard("🚀", R.string.role_send_title, R.string.role_send_subtitle, SendOrange, Ink, onSendClick)
                 RoleCard("📬", R.string.role_receive_title, R.string.role_receive_subtitle, ReceiveBlue, Color.White, onReceiveClick)
 
@@ -80,19 +74,6 @@ fun HomeScreen(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun StepTitle(number: Int, text: String) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Surface(shape = CircleShape, color = Ink, contentColor = Color.White, modifier = Modifier.size(40.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                Text("$number", style = MaterialTheme.typography.titleLarge)
-            }
-        }
-        Spacer(Modifier.width(12.dp))
-        Text(text, style = MaterialTheme.typography.titleLarge)
     }
 }
 

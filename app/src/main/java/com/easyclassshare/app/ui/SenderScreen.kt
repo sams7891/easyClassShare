@@ -47,8 +47,6 @@ import kotlinx.coroutines.delay
 @Composable
 fun SenderScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
     val clipboard = LocalClipboardManager.current
-    val room = vm.room
-    val roomName = stringResource(room.label)
     val result = vm.sendResult
 
     // Hide the "Sent!" banner after a few seconds.
@@ -60,7 +58,7 @@ fun SenderScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
     }
 
     Scaffold(
-        topBar = { KidTopBar(stringResource(R.string.send_title), room, SendOrange, Ink, onBack) },
+        topBar = { KidTopBar(stringResource(R.string.send_title), SendOrange, Ink, onBack) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -133,7 +131,7 @@ fun SenderScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
                     text = if (vm.isSending) {
                         stringResource(R.string.sending)
                     } else {
-                        stringResource(R.string.send_button, room.emoji, roomName)
+                        stringResource(R.string.send_button)
                     },
                     onClick = vm::sendDraft,
                     containerColor = Leaf,
@@ -142,7 +140,7 @@ fun SenderScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
                 )
             }
             if (result != null) {
-                item { ResultBanner(result.success, room.emoji, roomName) }
+                item { ResultBanner(result.success) }
             }
             if (vm.sent.isNotEmpty()) {
                 item {
@@ -157,7 +155,7 @@ fun SenderScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun ResultBanner(success: Boolean, emoji: String, roomName: String) {
+private fun ResultBanner(success: Boolean) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
@@ -166,7 +164,7 @@ private fun ResultBanner(success: Boolean, emoji: String, roomName: String) {
         ),
     ) {
         Text(
-            if (success) stringResource(R.string.send_ok, emoji, roomName) else stringResource(R.string.send_failed),
+            if (success) stringResource(R.string.send_ok) else stringResource(R.string.send_failed),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.fillMaxWidth().padding(18.dp),
         )
