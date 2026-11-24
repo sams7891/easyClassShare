@@ -18,13 +18,13 @@
     <string name="default_sender">Teacher</string>
 
     <!-- Home -->
-    <string name="home_tagline">Share links with every tablet in your class.</string>
+    <string name="home_tagline">Share links with every device in your class.</string>
     <string name="home_class_title">My class</string>
-    <string name="home_class_text">Set up this tablet once. Works on any network, at school or at home.</string>
+    <string name="home_class_text">Set up this device once. Works on any network, at school or at home.</string>
     <string name="home_class_button">Set up</string>
     <string name="home_wifi_title">Same Wi-Fi</string>
-    <string name="home_wifi_text">No internet? Share with tablets on the same Wi-Fi network.</string>
-    <string name="home_wifi_only_text">Share with tablets on the same Wi-Fi network. No internet needed.</string>
+    <string name="home_wifi_text">No internet? Share with devices on the same Wi-Fi network.</string>
+    <string name="home_wifi_only_text">Share with devices on the same Wi-Fi network. No internet needed.</string>
     <string name="role_send_title">Send</string>
     <string name="role_receive_title">Receive</string>
 
@@ -41,7 +41,7 @@
     <string name="detected_text">This will be shown as a message.</string>
     <string name="send_button">Send to everyone</string>
     <string name="sending">Sending…</string>
-    <string name="send_ok">Sent to all tablets on this Wi-Fi.</string>
+    <string name="send_ok">Sent to all devices on this Wi-Fi.</string>
     <string name="send_failed">Couldn\'t send. Are you connected to Wi-Fi?</string>
     <string name="sent_history_title">Sent</string>
     <string name="send_again">Send again</string>
@@ -63,7 +63,7 @@
     <string name="setup_title">Set up</string>
     <string name="setup_add_class_title">Add a class or school</string>
     <string name="setup_not_configured">Online classes are not switched on in this version of the app. Whoever builds the app can turn them on with the Firebase steps in the README.</string>
-    <string name="setup_who">Who uses this tablet?</string>
+    <string name="setup_who">Who uses this device?</string>
     <string name="setup_student_title">Student</string>
     <string name="setup_student_subtitle">Join a class with a class code</string>
     <string name="setup_teacher_title">Teacher</string>
@@ -80,7 +80,7 @@
     <string name="setup_admin_join_button">Join as admin</string>
     <string name="setup_school_code_optional">School code (optional)</string>
     <string name="setup_school_code_hint">If your school uses Easy Class Share, enter its school code. Then the school admins can help manage this class.</string>
-    <string name="setup_once_tip">You only do this once. The tablet remembers its class, even after a restart.</string>
+    <string name="setup_once_tip">You only do this once. The device remembers its class, even after a restart.</string>
     <string name="setup_create_title">New class</string>
     <string name="setup_create_subtitle">Create a class and get its codes</string>
     <string name="setup_cojoin_title">Join as a teacher</string>
@@ -102,6 +102,7 @@
     <string name="online_error_wrong_code">That code is for something else. Check which code you need.</string>
     <string name="online_error_leave_code">That teacher code isn\'t right.</string>
     <string name="online_error_connection">No connection. Check the internet and try again.</string>
+    <string name="online_error_denied">The server refused this. The database rules probably need to be updated (see the README).</string>
     <string name="online_error_generic">Something went wrong. Check the internet and try again.</string>
 
     <!-- Online class: student -->
@@ -110,7 +111,7 @@
     <string name="student_sound_off">Sound is off. Your teacher turned it off.</string>
     <string name="student_leave">Leave class</string>
     <string name="student_leave_title">Leave the class?</string>
-    <string name="student_leave_text">A teacher needs to enter the teacher code to take this tablet out of the class.</string>
+    <string name="student_leave_text">A teacher needs to enter the teacher code to take this device out of the class.</string>
     <string name="removed_notice">A teacher removed this device from %1$s.</string>
     <string name="removed_notice_unknown">A teacher removed this device from a class.</string>
     <string name="lock_permission_title">One more setting</string>
@@ -118,13 +119,13 @@
     <string name="lock_permission_button">Open setting</string>
 
     <!-- Online class: teacher -->
-    <string name="teacher_devices_summary">%1$d of %2$d tablets online</string>
+    <string name="teacher_devices_summary">%1$d of %2$d devices online</string>
     <string name="class_settings">Class settings</string>
     <string name="teacher_wifi_mode">Share on the same Wi-Fi instead</string>
     <string name="classes_title">Your classes</string>
     <string name="classes_add">Add a class</string>
     <string name="tab_share">Share</string>
-    <string name="tab_tablets">Tablets (%1$d)</string>
+    <string name="tab_tablets">Devices (%1$d)</string>
 
     <string name="sound_label">Sound</string>
     <string name="sound_state_on">On</string>
@@ -141,30 +142,30 @@
 
     <string name="send_to_label">To</string>
     <string name="audience_class">Whole class</string>
-    <string name="audience_removed_tablet">Removed tablet</string>
+    <string name="audience_removed_tablet">Removed device</string>
     <plurals name="audience_tablets">
-        <item quantity="one">%1$d tablet</item>
-        <item quantity="other">%1$d tablets</item>
+        <item quantity="one">%1$d device</item>
+        <item quantity="other">%1$d devices</item>
     </plurals>
     <string name="send_to_class">Send to class</string>
     <plurals name="send_to_tablets">
-        <item quantity="one">Send to %1$d tablet</item>
-        <item quantity="other">Send to %1$d tablets</item>
+        <item quantity="one">Send to %1$d device</item>
+        <item quantity="other">Send to %1$d devices</item>
     </plurals>
     <string name="send_class_ok">Sent.</string>
     <string name="send_class_failed">Couldn\'t send. Check the internet connection.</string>
     <string name="recipients_title">Send to</string>
-    <string name="recipients_some">Or only these tablets:</string>
+    <string name="recipients_some">Or only these devices:</string>
     <string name="teacher_recent">Shared</string>
     <string name="receipt_opened">Opened by %1$d of %2$d</string>
     <string name="receipt_seen">Seen by %1$d of %2$d</string>
     <string name="receipt_who">Who not yet?</string>
     <string name="receipt_hide">Hide</string>
     <string name="receipt_missing">Not yet: %1$s</string>
-    <string name="confirm_delete_message">Delete this from every tablet?</string>
+    <string name="confirm_delete_message">Delete this from every device?</string>
 
-    <string name="tablets_empty_title">No tablets yet</string>
-    <string name="tablets_empty_text">On each student tablet: Set up, Student, then enter this class code.</string>
+    <string name="tablets_empty_title">No devices yet</string>
+    <string name="tablets_empty_text">On each student device: Set up, Student, then enter this class code.</string>
     <string name="summary_online">%1$d of %2$d online</string>
     <string name="summary_muted">%1$d muted</string>
     <string name="summary_low_battery">%1$d low battery</string>
@@ -172,12 +173,12 @@
     <string name="last_seen">Last seen %1$s</string>
     <string name="battery_level">%1$d%%</string>
     <string name="battery_charging">%1$d%%, charging</string>
-    <string name="tablet_no_lock">Eyes on me is not allowed on this tablet yet</string>
+    <string name="tablet_no_lock">Eyes on me is not allowed on this device yet</string>
     <string name="tablet_rename">Rename</string>
-    <string name="tablet_send_to">Send only to this tablet</string>
+    <string name="tablet_send_to">Send only to this device</string>
     <string name="tablet_remove">Remove from class</string>
-    <string name="rename_title">Rename tablet</string>
-    <string name="rename_text">The new name shows here and on the tablet.</string>
+    <string name="rename_title">Rename device</string>
+    <string name="rename_text">The new name shows here and on the device.</string>
     <string name="rename_label">Name</string>
 
     <!-- School admin -->
@@ -207,17 +208,17 @@
     <string name="manage_student_code">Class code</string>
     <string name="manage_student_code_hint">Students enter this once: Set up → Student.</string>
     <string name="manage_teacher_code">Teacher code</string>
-    <string name="manage_teacher_code_hint">Only for other teachers of this class. Also needed to take a student tablet out of the class.</string>
+    <string name="manage_teacher_code_hint">Only for other teachers of this class. Also needed to take a student device out of the class.</string>
     <string name="manage_new_code">New code</string>
     <string name="manage_teachers">Teachers (%1$d)</string>
     <string name="manage_you">%1$s (you)</string>
     <string name="manage_online">Online</string>
     <string name="manage_offline">Offline</string>
-    <string name="confirm_remove_device">Remove %1$s from the class? The tablet can join again with the class code.</string>
+    <string name="confirm_remove_device">Remove %1$s from the class? The device can join again with the class code.</string>
     <string name="confirm_remove_teacher">Remove %1$s as a teacher of this class?</string>
     <string name="confirm_leave_teacher">Leave this class on this device? The other teachers keep the class.</string>
     <string name="confirm_leave_last_teacher">You are the only teacher. If you leave, nobody can manage this class any more. Leave anyway?</string>
-    <string name="confirm_renew_student">Make a new class code? The old one stops working. Tablets already in the class stay in.</string>
+    <string name="confirm_renew_student">Make a new class code? The old one stops working. Devices already in the class stay in.</string>
     <string name="confirm_renew_teacher">Make a new teacher code? The old one stops working. Teachers already in the class stay in.</string>
 
     <!-- Notifications -->

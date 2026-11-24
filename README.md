@@ -1,12 +1,12 @@
 # Easy Class Share 🎒
 
 A small, kid-friendly Android app for sharing links (or short messages) with
-every tablet in a classroom. It works in two ways:
+every device in a classroom. It works in two ways:
 
-- **🏫 My class (online):** a one-time setup puts each tablet into a class.
+- **🏫 My class (online):** a one-time setup puts each device into a class.
   Works on **any network**, supports **several teachers per class**, and lets
   teachers **manage the class** and **switch sound off** for everyone or for
-  single tablets.
+  single devices.
 - **📶 Same Wi-Fi:** no setup and no internet, for quick sharing in one room.
 
 In same-Wi-Fi mode there are two roles:
@@ -14,13 +14,13 @@ In same-Wi-Fi mode there are two roles:
 | Role | Who | What it does |
 |------|-----|--------------|
 | 🚀 **SEND** | usually the teacher | Paste or type a link and send it to the whole class with one big button |
-| 📬 **RECEIVE** | the kids' tablets | Waits for links; each one shows up as a big card with a one-tap **Open** button |
+| 📬 **RECEIVE** | the kids' devices | Waits for links; each one shows up as a big card with a one-tap **Open** button |
 
 ## 📲 Download & install
 Get the latest **`.apk`** from the
 [Releases page](https://github.com/sams7891/easyClassShare/releases/latest),
-open it on the tablet and tap **Install** (allow "install unknown apps" if asked).
-Install the same version on every tablet.
+open it on the device and tap **Install** (allow "install unknown apps" if asked).
+Install the same version on every device.
 
 ## 🏫 Online classes
 ### Setting up a class (once)
@@ -28,8 +28,8 @@ Install the same version on every tablet.
    Type your name and the class name. You get two codes (see *Manage class*):
    - a **class code** (6 letters) for the students,
    - a **teacher code** (8 letters) for other teachers of this class.
-2. **Each student tablet:** **My class** → **Student**, type the child's name
-   and the class code. Done: the tablet stays in the class, also after a restart.
+2. **Each student device:** **My class** → **Student**, type the child's name
+   and the class code. Done: the device stays in the class, also after a restart.
 3. **Other teachers:** **My class** → **Teacher** → **Join as a teacher** with the
    teacher code. All teachers of a class have the same rights.
 4. **More classes:** a teacher taps the class name at the top → **Add a class**,
@@ -38,7 +38,7 @@ Install the same version on every tablet.
 ### Schools and school admins (optional)
 A school admin can manage **every class of the school**, also classes they
 don't teach, with everything a teacher can do (sound, Eyes on me, sharing,
-tablets, codes, teachers).
+devices, codes, teachers).
 
 1. **Admin:** **Set up** → **School admin** → **New school**. You get:
    - a **school code** (7 letters) for the teachers of the school,
@@ -59,29 +59,29 @@ The teacher screen has two status tiles at the top and two tabs:
 - **Sound**: tap to switch sound on, mute until you switch it back on, or mute
   for 10 to 60 minutes (sound then comes back by itself).
 - **Eyes on me**: tap to cover every student screen with "Eyes on your teacher";
-  tap again to end it. Over other apps this needs the tablet's *Display over
-  other apps* permission (the student screen asks for it once; the Tablets tab
-  shows which tablets haven't allowed it yet).
+  tap again to end it. Over other apps this needs the device's *Display over
+  other apps* permission (the student screen asks for it once; the Devices tab
+  shows which devices haven't allowed it yet).
 - **Share** tab: type or paste a link, choose **To: Whole class** or single
-  tablets, and send. Every shared item shows **"Opened by 18 of 24"**; tap it
-  to see who hasn't opened it yet. Shared items can be deleted from all tablets.
-- **Tablets** tab: every tablet with online / last seen, battery level, and its
-  own sound switch. The ⋮ menu renames a tablet, sends something only to that
-  tablet, or removes it from the class.
+  devices, and send. Every shared item shows **"Opened by 18 of 24"**; tap it
+  to see who hasn't opened it yet. Shared items can be deleted from all devices.
+- **Devices** tab: every device with online / last seen, battery level, and its
+  own sound switch. The ⋮ menu renames a device, sends something only to that
+  device, or removes it from the class.
 - **Class settings** (gear icon): class and teacher codes (renewable), the
   teachers of the class, and leaving the class.
 
 ### How the sound lock works
-While sound is off for a tablet, the app sets the tablet's volume (media,
+While sound is off for a device, the app sets the device's volume (media,
 notifications, system and ring) to zero and puts it back to zero if a child
 turns it up. Only a teacher can switch it on again; then the old volume comes
 back. This works while the app is installed and running (a small "Connected to
 my class" notification shows that). A child could still force-stop or
-uninstall the app; to prevent that, the tablets need a device-management
+uninstall the app; to prevent that, the devices need a device-management
 (MDM / kiosk) setup, which is outside this app.
 
-A student tablet can only leave the class when a teacher types the teacher code
-(or a teacher removes it in the Tablets tab).
+A student device can only leave the class when a teacher types the teacher code
+(or a teacher removes it in the Devices tab).
 
 ### One-time Firebase setup (for whoever builds the app)
 Online classes use a free [Firebase](https://firebase.google.com/) project.
@@ -105,21 +105,21 @@ Without it the app still builds and the same-Wi-Fi mode works; the
 `google-services.json` is not secret: Firebase says it is fine to ship it in
 apps. What protects the data are the database rules from step 4: only teachers
 of a class (and the admins of its school) can send, see the codes, change sound
-or remove tablets; students only see their own class.
+or remove devices; students only see their own class.
 
 The rules are generated by [`tools/make_rules.py`](tools/make_rules.py). After
 changing it, run `python3 tools/make_rules.py` and publish the new
 `database.rules.json` in the console again.
 
 Data stored online: class name, teacher and student first names, the shared
-links/messages (newest 50 shown), which tablets opened them, and each tablet's
+links/messages (newest 50 shown), which devices opened them, and each device's
 online status and battery level. No e-mail
 addresses or accounts.
 
 ## 📶 Same-Wi-Fi mode
-1. Connect all tablets to the **same Wi-Fi** (or the teacher's phone hotspot).
+1. Connect all devices to the **same Wi-Fi** (or the teacher's phone hotspot).
 2. Kids tap **RECEIVE**. The teacher taps **SEND**, pastes a link and taps
-   **🚀 Send**. A chime plays and the link pops up on every tablet.
+   **🚀 Send**. A chime plays and the link pops up on every device.
 
 Tip: in Chrome, the teacher can tap *Share → Easy Class Share* to open the
 Send screen with the link already filled in.
@@ -128,7 +128,7 @@ Send screen with the link already filled in.
 - No server, no accounts, no internet needed: messages are **UDP broadcasts**
   on the local network (port `47474`), JSON-encoded (`ShareMessage`, protocol v2).
 - Each message is sent 5× to survive dropped packets; receivers ignore
-  duplicates by id. "Send again" re-sends with the same id, so only tablets
+  duplicates by id. "Send again" re-sends with the same id, so only devices
   that missed it will show it.
 - Only `http`/`https` links are opened. Everything else is shown as text with a
   Copy button.

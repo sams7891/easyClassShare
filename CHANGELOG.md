@@ -6,31 +6,31 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [1.3.0] - 2026-11-24
 ### Added
-- **Online classes** (Firebase): one-time setup per tablet with a class code;
+- **Online classes** (Firebase): one-time setup per device with a class code;
   sharing works across different networks and in the background.
 - Several teachers per class (teacher code), with equal rights.
 - **Manage class** for teachers: class and teacher codes (renewable), list of
-  student tablets with online status, remove tablets or teachers.
+  student devices with online status, remove devices or teachers.
 - **Sound control**: teachers can switch sound off for the whole class or for
-  single tablets. Muted tablets are held at volume zero until a teacher allows
+  single devices. Muted devices are held at volume zero until a teacher allows
   sound again.
-- Student tablets reconnect automatically after a restart or app update, and
+- Student devices reconnect automatically after a restart or app update, and
   can only leave a class with the teacher code.
 - Teachers can be in **several classes** on one device and switch between
   them from the class name at the top (with "Add a class").
 - New, calmer look: real icons instead of emoji, plainer wording, a classroom
   colour palette (chalkboard green, paper, pencil yellow).
 - New teacher screen: Sound and "Eyes on me" tiles at the top, a **Share** tab
-  and a **Tablets** tab; codes and teachers moved to **Class settings**.
+  and a **Devices** tab; codes and teachers moved to **Class settings**.
 - **Read receipts**: "Opened by 18 of 24" on every shared link, with the names
-  of tablets that haven't opened it. Tapping a link notification opens it directly.
-- **Send to single tablets** instead of the whole class.
+  of devices that haven't opened it. Tapping a link notification opens it directly.
+- **Send to single devices** instead of the whole class.
 - **Timed mute** (10 to 60 minutes); sound comes back by itself.
-- **Battery level and "last seen"** for every tablet.
-- **Delete** something shared from all tablets.
-- **Eyes on me**: a full-screen message on every student tablet until the
+- **Battery level and "last seen"** for every device.
+- **Delete** something shared from all devices.
+- **Eyes on me**: a full-screen message on every student device until the
   teacher ends it.
-- Teachers can **rename tablets**.
+- Teachers can **rename devices**.
 - **Schools and school admins**: an admin creates a school (or joins with an
   admin code) and can manage every class of the school with full teacher
   rights, without being one of its teachers. Teachers add a class to a school

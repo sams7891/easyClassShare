@@ -7,7 +7,7 @@
     <!-- Lets the receiver hear Wi-Fi broadcast packets -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
-    <!-- Online classes: student tablets stay connected in the background, show new
+    <!-- Online classes: student devices stay connected in the background, show new
          links as notifications, keep the teacher's sound setting and reconnect after a restart -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -48,7 +48,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps a classroom tablet connected to its class so it receives the teacher's links and applies the teacher's sound setting" />
+                android:value="Keeps a classroom device connected to its class so it receives the teacher's links and applies the teacher's sound setting" />
         </service>
 
         <receiver

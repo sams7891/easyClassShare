@@ -377,7 +377,11 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
                     JoinException.Reason.WRONG_KIND_OF_CODE -> R.string.online_error_wrong_code
                 }
             } catch (e: Exception) {
-                error = R.string.online_error_generic
+                error = if (e.message?.contains("permission denied", ignoreCase = true) == true) {
+                    R.string.online_error_denied
+                } else {
+                    R.string.online_error_generic
+                }
             } finally {
                 busy = false
             }
