@@ -2,6 +2,7 @@ package com.easyclassshare.app.online
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -45,8 +46,33 @@ class ModelsTest {
         assertFalse(SoundPolicy.isAllowed(true, false))
 
         val settings = SoundSettings(classWide = false, perDevice = mapOf("tablet1" to true))
-        assertTrue(settings.isAllowed("tablet1"))
-        assertFalse(settings.isAllowed("tablet2"))
-        assertFalse(settings.classWideAllowed)
+        assertTrue(settings.isAllowed("tablet1", now = 0L))
+        assertFalse(settings.isAllowed("tablet2", now = 0L))
+        assertFalse(settings.classWideAllowed(now = 0L))
+    }
+
+    @Test
+    fun timedMuteEndsByItself() {
+        val settings = SoundSettings(classWide = false, perDevice = emptyMap(), mutedUntil = 1_000L)
+        assertFalse(settings.classWideAllowed(now = 999L))
+        assertEquals(1_000L, settings.timerEnd(now = 999L))
+        assertTrue(settings.classWideAllowed(now = 1_000L))
+        assertNull(settings.timerEnd(now = 1_000L))
+        assertTrue(settings.isAllowed("tablet1", now = 2_000L))
+    }
+
+    @Test
+    fun deviceSwitchStillWinsAfterTimedMuteEnds() {
+        val settings = SoundSettings(classWide = false, perDevice = mapOf("tablet1" to false), mutedUntil = 1_000L)
+        assertFalse(settings.isAllowed("tablet1", now = 5_000L))
+        assertTrue(settings.isAllowed("tablet2", now = 5_000L))
+    }
+
+    @Test
+    fun lowBatteryOnlyWhenNotCharging() {
+        assertTrue(DeviceInfo("a", "A", online = true, battery = 15).batteryLow)
+        assertFalse(DeviceInfo("a", "A", online = true, battery = 15, charging = true).batteryLow)
+        assertFalse(DeviceInfo("a", "A", online = true, battery = 80).batteryLow)
+        assertFalse(DeviceInfo("a", "A", online = true).batteryLow)
     }
 }

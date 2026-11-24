@@ -1,8 +1,6 @@
 package com.easyclassshare.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,13 +8,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -24,8 +18,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,40 +34,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.ClassViewModel
 import com.easyclassshare.app.R
-import com.easyclassshare.app.online.DeviceInfo
 import com.easyclassshare.app.online.Role
 import com.easyclassshare.app.online.TeacherInfo
 import com.easyclassshare.app.ui.components.AppTopBar
 import com.easyclassshare.app.ui.components.Panel
 import com.easyclassshare.app.ui.components.SoftButton
-import com.easyclassshare.app.ui.components.drawableIcon
 import com.easyclassshare.app.ui.theme.Brick
 import com.easyclassshare.app.ui.theme.Chalk
-import com.easyclassshare.app.ui.theme.Ink
 import com.easyclassshare.app.ui.theme.InkSoft
 import com.easyclassshare.app.ui.theme.Line
 
 /** A pending "are you sure?" question. */
 private sealed interface Confirm {
-    data class RemoveDevice(val device: DeviceInfo) : Confirm
     data class RemoveTeacher(val teacher: TeacherInfo) : Confirm
     data object LeaveClass : Confirm
     data class RenewCode(val role: Role) : Confirm
 }
 
-/** Teachers only: join codes, sound per tablet, removing tablets and co-teachers. */
+/** Teachers only: join codes, co-teachers and leaving the class. Tablets are managed on the class screen. */
 @Composable
 fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
     val className by cvm.className.collectAsState()
     val codes by cvm.codes.collectAsState()
-    val sound by cvm.sound.collectAsState()
-    val devices by cvm.devices.collectAsState()
     val teachers by cvm.teachers.collectAsState()
     val myUid by cvm.myUid.collectAsState()
     var confirm by remember { mutableStateOf<Confirm?>(null) }
 
     Scaffold(
-        topBar = { AppTopBar(stringResource(R.string.manage_class), onBack, subtitle = className) },
+        topBar = { AppTopBar(stringResource(R.string.class_settings), onBack, subtitle = className) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -106,36 +92,6 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
                 }
             }
 
-            // ---- Sound
-            item {
-                SoundPanel(
-                    allowed = sound.classWideAllowed,
-                    enabled = !cvm.busy,
-                    onMuteAll = { cvm.setClassSound(false) },
-                    onAllowAll = { cvm.setClassSound(true) },
-                )
-            }
-
-            // ---- Student tablets
-            item {
-                Panel {
-                    Text(stringResource(R.string.manage_students, devices.size), style = MaterialTheme.typography.titleLarge)
-                    if (devices.isEmpty()) {
-                        Text(stringResource(R.string.manage_no_students), style = MaterialTheme.typography.bodyLarge, color = InkSoft)
-                    }
-                    devices.forEachIndexed { index, device ->
-                        if (index > 0) HorizontalDivider(color = Line)
-                        DeviceRow(
-                            device = device,
-                            soundAllowed = sound.isAllowed(device.uid),
-                            enabled = !cvm.busy,
-                            onSoundChange = { cvm.setDeviceSound(device.uid, it) },
-                            onRemove = { confirm = Confirm.RemoveDevice(device) },
-                        )
-                    }
-                }
-            }
-
             // ---- Teachers
             item {
                 Panel {
@@ -162,7 +118,6 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
 
     confirm?.let { pending ->
         val text = when (pending) {
-            is Confirm.RemoveDevice -> stringResource(R.string.confirm_remove_device, pending.device.name)
             is Confirm.RemoveTeacher -> stringResource(R.string.confirm_remove_teacher, pending.teacher.name)
             Confirm.LeaveClass -> stringResource(
                 if (teachers.size <= 1) R.string.confirm_leave_last_teacher else R.string.confirm_leave_teacher,
@@ -177,7 +132,6 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
             confirmButton = {
                 TextButton(onClick = {
                     when (pending) {
-                        is Confirm.RemoveDevice -> cvm.removeDevice(pending.device.uid)
                         is Confirm.RemoveTeacher -> cvm.removeTeacher(pending.teacher.uid)
                         Confirm.LeaveClass -> cvm.leave()
                         is Confirm.RenewCode -> cvm.renewCode(pending.role)
@@ -206,47 +160,6 @@ private fun CodeBlock(title: String, hint: String, code: String?, enabled: Boole
         Text(hint, style = MaterialTheme.typography.bodyMedium, color = InkSoft)
         Row {
             SoftButton(stringResource(R.string.manage_new_code), onRenew, icon = Icons.Filled.Refresh, enabled = enabled && code != null)
-        }
-    }
-}
-
-@Composable
-private fun DeviceRow(
-    device: DeviceInfo,
-    soundAllowed: Boolean,
-    enabled: Boolean,
-    onSoundChange: (Boolean) -> Unit,
-    onRemove: () -> Unit,
-) {
-    PersonRow(
-        icon = {
-            Box {
-                Icon(Icons.Filled.Face, contentDescription = null, tint = InkSoft)
-                Box(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(10.dp)
-                        .background(if (device.online) Chalk else Line, CircleShape),
-                )
-            }
-        },
-        name = device.name,
-        detail = stringResource(if (device.online) R.string.manage_online else R.string.manage_offline),
-    ) {
-        Icon(
-            drawableIcon(if (soundAllowed) R.drawable.ic_volume_on else R.drawable.ic_volume_off),
-            contentDescription = null,
-            tint = if (soundAllowed) Ink else Brick,
-        )
-        Spacer(Modifier.width(6.dp))
-        Switch(
-            checked = soundAllowed,
-            onCheckedChange = onSoundChange,
-            enabled = enabled,
-            colors = SwitchDefaults.colors(checkedTrackColor = Chalk),
-        )
-        TextButton(onClick = onRemove, enabled = enabled) {
-            Text(stringResource(R.string.remove_button), color = Brick)
         }
     }
 }

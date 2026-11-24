@@ -8,6 +8,10 @@
     <string name="ok_button">OK</string>
     <string name="yes_button">Yes</string>
     <string name="remove_button">Remove</string>
+    <string name="delete_button">Delete</string>
+    <string name="done_button">Done</string>
+    <string name="save_button">Save</string>
+    <string name="more_options">More options</string>
     <string name="leave_button">Leave class</string>
     <string name="copied">Copied</string>
     <string name="could_not_open">Could not open this link</string>
@@ -96,22 +100,72 @@
     <string name="student_leave_text">A teacher needs to enter the teacher code to take this tablet out of the class.</string>
     <string name="removed_notice">A teacher removed this device from %1$s.</string>
     <string name="removed_notice_unknown">A teacher removed this device from a class.</string>
+    <string name="lock_permission_title">One more setting</string>
+    <string name="lock_permission_text">Your teacher can put a message on the screen to get everyone\'s attention. For that, allow Easy Class Share to display over other apps.</string>
+    <string name="lock_permission_button">Open setting</string>
 
     <!-- Online class: teacher -->
     <string name="teacher_devices_summary">%1$d of %2$d tablets online</string>
-    <string name="send_to_class">Send to class</string>
-    <string name="send_class_ok">Sent. Every tablet in the class will get it.</string>
-    <string name="send_class_failed">Couldn\'t send. Check the internet connection.</string>
+    <string name="class_settings">Class settings</string>
     <string name="teacher_wifi_mode">Share on the same Wi-Fi instead</string>
-    <string name="teacher_recent">Recently shared</string>
-    <string name="manage_class">Manage class</string>
-    <string name="sound_title">Sound on student tablets</string>
-    <string name="sound_class_on">Sound is on for the class.</string>
-    <string name="sound_class_off">Sound is off for the class.</string>
-    <string name="sound_mute_all">Mute all</string>
-    <string name="sound_allow_all">Sound on</string>
     <string name="classes_title">Your classes</string>
     <string name="classes_add">Add a class</string>
+    <string name="tab_share">Share</string>
+    <string name="tab_tablets">Tablets (%1$d)</string>
+
+    <string name="sound_label">Sound</string>
+    <string name="sound_state_on">On</string>
+    <string name="sound_state_muted">Muted</string>
+    <string name="sound_state_muted_until">Muted until %1$s</string>
+    <string name="sound_menu_on">Sound on</string>
+    <string name="sound_menu_mute">Mute until I turn it on</string>
+    <string name="sound_menu_mute_for">Mute for %1$d minutes</string>
+
+    <string name="attention_label">Eyes on me</string>
+    <string name="attention_state_off">Off</string>
+    <string name="attention_state_on">On. Tap to end</string>
+    <string name="attention_default_text">Eyes on your teacher</string>
+
+    <string name="send_to_label">To</string>
+    <string name="audience_class">Whole class</string>
+    <string name="audience_removed_tablet">Removed tablet</string>
+    <plurals name="audience_tablets">
+        <item quantity="one">%1$d tablet</item>
+        <item quantity="other">%1$d tablets</item>
+    </plurals>
+    <string name="send_to_class">Send to class</string>
+    <plurals name="send_to_tablets">
+        <item quantity="one">Send to %1$d tablet</item>
+        <item quantity="other">Send to %1$d tablets</item>
+    </plurals>
+    <string name="send_class_ok">Sent.</string>
+    <string name="send_class_failed">Couldn\'t send. Check the internet connection.</string>
+    <string name="recipients_title">Send to</string>
+    <string name="recipients_some">Or only these tablets:</string>
+    <string name="teacher_recent">Shared</string>
+    <string name="receipt_opened">Opened by %1$d of %2$d</string>
+    <string name="receipt_seen">Seen by %1$d of %2$d</string>
+    <string name="receipt_who">Who not yet?</string>
+    <string name="receipt_hide">Hide</string>
+    <string name="receipt_missing">Not yet: %1$s</string>
+    <string name="confirm_delete_message">Delete this from every tablet?</string>
+
+    <string name="tablets_empty_title">No tablets yet</string>
+    <string name="tablets_empty_text">On each student tablet: Set up, Student, then enter this class code.</string>
+    <string name="summary_online">%1$d of %2$d online</string>
+    <string name="summary_muted">%1$d muted</string>
+    <string name="summary_low_battery">%1$d low battery</string>
+    <string name="summary_no_lock">%1$d without Eyes on me</string>
+    <string name="last_seen">Last seen %1$s</string>
+    <string name="battery_level">%1$d%%</string>
+    <string name="battery_charging">%1$d%%, charging</string>
+    <string name="tablet_no_lock">Eyes on me is not allowed on this tablet yet</string>
+    <string name="tablet_rename">Rename</string>
+    <string name="tablet_send_to">Send only to this tablet</string>
+    <string name="tablet_remove">Remove from class</string>
+    <string name="rename_title">Rename tablet</string>
+    <string name="rename_text">The new name shows here and on the tablet.</string>
+    <string name="rename_label">Name</string>
 
     <!-- Online class: manage -->
     <string name="manage_codes">Codes</string>
@@ -120,13 +174,11 @@
     <string name="manage_teacher_code">Teacher code</string>
     <string name="manage_teacher_code_hint">Only for other teachers of this class. Also needed to take a student tablet out of the class.</string>
     <string name="manage_new_code">New code</string>
-    <string name="manage_students">Tablets (%1$d)</string>
-    <string name="manage_no_students">No tablets yet. Give your students the class code.</string>
     <string name="manage_teachers">Teachers (%1$d)</string>
     <string name="manage_you">%1$s (you)</string>
     <string name="manage_online">Online</string>
     <string name="manage_offline">Offline</string>
-    <string name="confirm_remove_device">Remove %1$s\'s tablet from the class? It can join again with the class code.</string>
+    <string name="confirm_remove_device">Remove %1$s from the class? The tablet can join again with the class code.</string>
     <string name="confirm_remove_teacher">Remove %1$s as a teacher of this class?</string>
     <string name="confirm_leave_teacher">Leave this class on this device? The other teachers keep the class.</string>
     <string name="confirm_leave_last_teacher">You are the only teacher. If you leave, nobody can manage this class any more. Leave anyway?</string>

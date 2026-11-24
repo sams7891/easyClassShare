@@ -11,31 +11,40 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.Query
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.tasks.await
 
 /**
  * Everything the app stores online, in Firebase Realtime Database:
  *
  * ```
- * joinCodes/{code}                 -> { classId, role: "student" | "teacher" }
- * classSecrets/{classId}           -> { studentCode, teacherCode }        (teachers only)
- * classes/{classId}/info           -> { name, createdBy, createdAt }
- * classes/{classId}/teachers/{uid} -> { name, code, joinedAt }
- * classes/{classId}/devices/{uid}  -> { name, code, joinedAt, online, lastSeen }
- * classes/{classId}/sound          -> { all: Boolean, devices: { uid: Boolean } }
- * classes/{classId}/messages/{id}  -> { from, content, ts, by }
+ * joinCodes/{code}                     -> { classId, role: "student" | "teacher" }
+ * classSecrets/{classId}               -> { studentCode, teacherCode }        (teachers only)
+ * classes/{classId}/info               -> { name, createdBy, createdAt }
+ * classes/{classId}/teachers/{uid}     -> { name, code, joinedAt }
+ * classes/{classId}/devices/{uid}      -> { name, code, joinedAt, online, lastSeen, battery, charging, canLock }
+ * classes/{classId}/sound              -> { all: Boolean, until: Long, devices: { uid: Boolean } }
+ * classes/{classId}/messages/{id}      -> { from, content, ts, by }            (whole class)
+ * classes/{classId}/inbox/{uid}/{id}   -> { from, content, ts, by }            (one tablet)
+ * classes/{classId}/opened/{id}/{uid}  -> ts                                   (who opened it)
+ * classes/{classId}/attention          -> { text, from, ts }                   ("Eyes on me")
  * ```
  *
  * Every device signs in anonymously; its user id stands for "this tablet".
  * Who may read or write what is enforced by `database.rules.json`.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 object ClassRepository {
     private lateinit var appContext: Context
 
@@ -144,7 +153,7 @@ object ClassRepository {
     private fun memberRef(classId: String, role: Role, uid: String): DatabaseReference =
         classRef(classId).child(if (role == Role.TEACHER) "teachers" else "devices").child(uid)
 
-    // ---------------------------------------------------------------- live data
+    // ---------------------------------------------------------------- live data (everyone)
 
     /** Emits false once this device is no longer part of the class (a teacher removed it). */
     fun isStillMember(membership: Membership): Flow<Boolean> = withUid { uid ->
@@ -154,29 +163,75 @@ object ClassRepository {
     fun className(classId: String): Flow<String?> =
         classRef(classId).child("info").child("name").values().map { it.value as? String }
 
-    /** The newest 50 messages, newest first. */
-    fun messages(classId: String): Flow<List<ShareMessage>> =
-        classRef(classId).child("messages").orderByKey().limitToLast(MESSAGE_LIMIT).values().map { snapshot ->
-            snapshot.children.mapNotNull { child ->
-                val id = child.key ?: return@mapNotNull null
-                val content = child.child("content").value as? String ?: return@mapNotNull null
-                ShareMessage(
-                    id = id,
-                    senderName = child.child("from").value as? String ?: "",
-                    content = content,
-                    timestamp = (child.child("ts").value as? Number)?.toLong() ?: 0L,
-                )
-            }.reversed()
-        }
+    /** Difference between the server clock and this device's clock, in milliseconds. */
+    fun serverTimeOffset(): Flow<Long> =
+        db.getReference(".info/serverTimeOffset").values()
+            .map { (it.value as? Number)?.toLong() ?: 0L }
+            .onStart { emit(0L) }
+            .distinctUntilChanged()
 
-    /** For a student device: may it make sound right now? */
+    // ---------------------------------------------------------------- student
+
+    /** What this tablet received: everything sent to the whole class plus what was sent to it alone. Newest first. */
+    fun messages(classId: String): Flow<List<ShareMessage>> = withUid { uid ->
+        combine(
+            classRef(classId).child("messages").orderByKey().limitToLast(MESSAGE_LIMIT).values(),
+            classRef(classId).child("inbox").child(uid).orderByKey().limitToLast(MESSAGE_LIMIT).values(),
+        ) { forClass, forMe ->
+            (forClass.children + forMe.children)
+                .mapNotNull { parseMessage(it) }
+                .sortedByDescending { it.id }
+                .take(MESSAGE_LIMIT)
+                .map { ShareMessage(id = it.id, senderName = it.from, content = it.content, timestamp = it.timestamp) }
+        }
+    }
+
+    /** The name a teacher gave this tablet (teachers can rename tablets). */
+    fun myDeviceName(classId: String): Flow<String?> = withUid { uid ->
+        classRef(classId).child("devices").child(uid).child("name").values().map { it.value as? String }
+    }
+
+    /** For a student device: may it make sound right now? Turns true by itself when a timed mute ends. */
     fun soundAllowedForMe(classId: String): Flow<Boolean> = withUid { uid ->
         val sound = classRef(classId).child("sound")
         combine(
             sound.child("all").values(),
+            sound.child("until").values(),
             sound.child("devices").child(uid).values(),
-        ) { all, mine -> SoundPolicy.isAllowed(all.value as? Boolean, mine.value as? Boolean) }
+            serverTimeOffset(),
+        ) { all, until, mine, offset ->
+            SoundInputs(all.value as? Boolean, (until.value as? Number)?.toLong(), mine.value as? Boolean, offset)
+        }.flatMapLatest { s ->
+            flow {
+                val now = System.currentTimeMillis() + s.offset
+                emit(SoundPolicy.isAllowed(s.all, s.mine, s.until, now))
+                if (s.until != null && s.until > now) {
+                    delay(s.until - now)
+                    emit(SoundPolicy.isAllowed(s.all, s.mine, s.until, s.until))
+                }
+            }
+        }.distinctUntilChanged()
     }
+
+    private data class SoundInputs(val all: Boolean?, val until: Long?, val mine: Boolean?, val offset: Long)
+
+    /** Tells the teachers this tablet opened a link (or saw a message). */
+    suspend fun markOpened(classId: String, messageId: String) {
+        val uid = uid()
+        classRef(classId).child("opened").child(messageId).child(uid).setValue(ServerValue.TIMESTAMP).await()
+    }
+
+    /** Battery level, charging state and whether "Eyes on me" can cover the screen. */
+    fun reportStatus(classId: String, values: Map<String, Any>) {
+        val uid = auth.currentUser?.uid ?: return
+        classRef(classId).child("devices").child(uid).updateChildren(values)
+    }
+
+    fun attention(classId: String): Flow<Attention?> =
+        classRef(classId).child("attention").values().map { snapshot ->
+            val text = snapshot.child("text").value as? String ?: return@map null
+            Attention(text, snapshot.child("from").value as? String ?: "")
+        }
 
     // ---------------------------------------------------------------- teacher only
 
@@ -189,6 +244,7 @@ object ClassRepository {
                     val allowed = child.value as? Boolean ?: return@mapNotNull null
                     uid to allowed
                 }.toMap(),
+                mutedUntil = (snapshot.child("until").value as? Number)?.toLong(),
             )
         }
 
@@ -197,7 +253,15 @@ object ClassRepository {
             snapshot.children.mapNotNull { child ->
                 val uid = child.key ?: return@mapNotNull null
                 val name = child.child("name").value as? String ?: return@mapNotNull null
-                DeviceInfo(uid, name, online = child.child("online").value == true)
+                DeviceInfo(
+                    uid = uid,
+                    name = name,
+                    online = child.child("online").value == true,
+                    lastSeen = (child.child("lastSeen").value as? Number)?.toLong(),
+                    battery = (child.child("battery").value as? Number)?.toInt(),
+                    charging = child.child("charging").value == true,
+                    canLock = child.child("canLock").value as? Boolean,
+                )
             }.sortedBy { it.name.lowercase() }
         }
 
@@ -216,24 +280,82 @@ object ClassRepository {
             if (student != null && teacher != null) ClassCodes(student, teacher) else null
         }
 
-    suspend fun send(classId: String, from: String, content: String) {
-        val uid = uid()
-        val messages = classRef(classId).child("messages")
-        val id = messages.push().key ?: throw IllegalStateException("No message id")
-        messages.child(id).setValue(
-            mapOf("from" to from, "content" to content, "ts" to ServerValue.TIMESTAMP, "by" to uid),
-        ).await()
+    /** Everything the teachers shared (to the class or to single tablets), newest first, with who opened it. */
+    fun sentMessages(classId: String): Flow<List<SentMessage>> = combine(
+        classRef(classId).child("messages").orderByKey().limitToLast(MESSAGE_LIMIT).values(),
+        classRef(classId).child("inbox").values(),
+        classRef(classId).child("opened").values(),
+    ) { forClass, inboxes, opened ->
+        val direct = HashMap<String, SentMessage>()
+        for (inbox in inboxes.children) {
+            val deviceUid = inbox.key ?: continue
+            for (child in inbox.children) {
+                val message = parseMessage(child) ?: continue
+                val known = direct[message.id]
+                direct[message.id] = (known ?: message.copy(targets = emptySet()))
+                    .let { it.copy(targets = it.targets.orEmpty() + deviceUid) }
+            }
+        }
+        val openedBy = opened.children.associate { m -> m.key.orEmpty() to m.children.mapNotNull { it.key }.toSet() }
+        (forClass.children.mapNotNull { parseMessage(it) } + direct.values)
+            .sortedByDescending { it.id }
+            .take(MESSAGE_LIMIT)
+            .map { it.copy(openedBy = openedBy[it.id].orEmpty()) }
     }
 
-    /** Sets sound for the whole class and clears every per-device switch. */
-    suspend fun setClassSound(classId: String, allowed: Boolean) {
+    /** Sends to the whole class ([targets] = null) or only to the given tablets. */
+    suspend fun send(classId: String, from: String, content: String, targets: Set<String>?) {
+        val uid = uid()
+        val id = classRef(classId).child("messages").push().key ?: throw IllegalStateException("No message id")
+        val value = mapOf("from" to from, "content" to content, "ts" to ServerValue.TIMESTAMP, "by" to uid)
+        if (targets == null) {
+            classRef(classId).child("messages").child(id).setValue(value).await()
+        } else {
+            val updates = HashMap<String, Any?>()
+            for (target in targets) updates["classes/$classId/inbox/$target/$id"] = value
+            root.updateChildren(updates).await()
+        }
+    }
+
+    suspend fun deleteMessage(classId: String, message: SentMessage) {
         uid()
-        classRef(classId).child("sound").setValue(mapOf("all" to allowed)).await()
+        val updates = hashMapOf<String, Any?>("classes/$classId/opened/${message.id}" to null)
+        if (message.targets == null) {
+            updates["classes/$classId/messages/${message.id}"] = null
+        } else {
+            for (target in message.targets) updates["classes/$classId/inbox/$target/${message.id}"] = null
+        }
+        root.updateChildren(updates).await()
+    }
+
+    /**
+     * Sets sound for the whole class and clears every per-device switch.
+     * With [mutedUntil] (server time) a mute ends by itself.
+     */
+    suspend fun setClassSound(classId: String, allowed: Boolean, mutedUntil: Long? = null) {
+        uid()
+        val value = if (!allowed && mutedUntil != null) mapOf("all" to false, "until" to mutedUntil) else mapOf("all" to allowed)
+        classRef(classId).child("sound").setValue(value).await()
     }
 
     suspend fun setDeviceSound(classId: String, deviceUid: String, allowed: Boolean) {
         uid()
         classRef(classId).child("sound").child("devices").child(deviceUid).setValue(allowed).await()
+    }
+
+    suspend fun renameDevice(classId: String, deviceUid: String, name: String) {
+        uid()
+        classRef(classId).child("devices").child(deviceUid).child("name").setValue(name).await()
+    }
+
+    suspend fun setAttention(classId: String, attention: Attention?) {
+        uid()
+        val node = classRef(classId).child("attention")
+        if (attention == null) {
+            node.removeValue().await()
+        } else {
+            node.setValue(mapOf("text" to attention.text, "from" to attention.from, "ts" to ServerValue.TIMESTAMP)).await()
+        }
     }
 
     suspend fun removeDevice(classId: String, deviceUid: String) {
@@ -242,6 +364,7 @@ object ClassRepository {
             hashMapOf<String, Any?>(
                 "classes/$classId/devices/$deviceUid" to null,
                 "classes/$classId/sound/devices/$deviceUid" to null,
+                "classes/$classId/inbox/$deviceUid" to null,
             ),
         ).await()
     }
@@ -288,13 +411,25 @@ object ClassRepository {
     }
 
     fun markOffline(classId: String) {
-        if (auth.currentUser == null) return
-        val me = classRef(classId).child("devices").child(auth.currentUser!!.uid)
+        val uid = auth.currentUser?.uid ?: return
+        val me = classRef(classId).child("devices").child(uid)
         me.onDisconnect().cancel()
         me.updateChildren(mapOf("online" to false, "lastSeen" to ServerValue.TIMESTAMP))
     }
 
     // ---------------------------------------------------------------- helpers
+
+    private fun parseMessage(child: DataSnapshot): SentMessage? {
+        val id = child.key ?: return null
+        val content = child.child("content").value as? String ?: return null
+        return SentMessage(
+            id = id,
+            from = child.child("from").value as? String ?: "",
+            content = content,
+            timestamp = (child.child("ts").value as? Number)?.toLong() ?: 0L,
+            targets = null,
+        )
+    }
 
     private fun <T> withUid(block: (String) -> Flow<T>): Flow<T> = flow { emitAll(block(uid())) }
 

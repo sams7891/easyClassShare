@@ -53,8 +53,8 @@ android {
         minSdk = 26
         targetSdk = 34
         // Bump both of these for every release (see CHANGELOG.md).
-        versionCode = 5
-        versionName = "1.3.0-beta.2"
+        versionCode = 6
+        versionName = "1.3.0-beta.3"
 
         buildConfigField("String", "FIREBASE_API_KEY", "\"${firebaseConfig["apiKey"].orEmpty()}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${firebaseConfig["appId"].orEmpty()}\"")
@@ -115,6 +115,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
     // Online classes (Firebase Realtime Database + anonymous sign-in)
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))

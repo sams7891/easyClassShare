@@ -16,9 +16,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
+import com.easyclassshare.app.data.LinkUtils
 import com.easyclassshare.app.online.LocalSetup
 import com.easyclassshare.app.online.Role
 import com.easyclassshare.app.service.ClassService
+import com.easyclassshare.app.service.Notifications
 import com.easyclassshare.app.ui.HomeScreen
 import com.easyclassshare.app.ui.ManageClassScreen
 import com.easyclassshare.app.ui.ReceiverScreen
@@ -26,6 +28,7 @@ import com.easyclassshare.app.ui.SenderScreen
 import com.easyclassshare.app.ui.SetupScreen
 import com.easyclassshare.app.ui.StudentClassScreen
 import com.easyclassshare.app.ui.TeacherClassScreen
+import com.easyclassshare.app.ui.openLink
 import com.easyclassshare.app.ui.theme.EasyClassShareTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +42,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) {
             if (LocalSetup.membership.value != null) vm.screen = Screen.CLASS
             handleShareIntent(intent)
+            handleOpenMessage(intent)
         }
         setContent {
             EasyClassShareTheme { EasyClassShareApp(vm, cvm) }
@@ -59,6 +63,22 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleShareIntent(intent)
+        handleOpenMessage(intent)
+    }
+
+    /** A student tapped a "new link" notification: open the link and tell the teacher. */
+    private fun handleOpenMessage(intent: Intent?) {
+        if (intent?.action != Notifications.ACTION_OPEN_MESSAGE) return
+        val classId = intent.getStringExtra(Notifications.EXTRA_CLASS_ID) ?: return
+        val messageId = intent.getStringExtra(Notifications.EXTRA_MESSAGE_ID) ?: return
+        val content = intent.getStringExtra(Notifications.EXTRA_CONTENT).orEmpty()
+        // Handle it only once, not again after a rotation.
+        intent.action = null
+        if (LocalSetup.membership.value?.classId != classId) return
+        if (LinkUtils.looksLikeLink(content)) {
+            ClassViewModel.reportOpened(classId, messageId)
+            openLink(this, content, getString(R.string.could_not_open))
+        }
     }
 
     /** "Share → Easy Class Share" from another app: open a Send screen with the text ready. */
@@ -127,7 +147,7 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
                 Role.STUDENT -> StudentClassScreen(cvm)
                 Role.TEACHER -> TeacherClassScreen(
                     cvm,
-                    onManage = { cvm.clearError(); vm.screen = Screen.MANAGE },
+                    onSettings = { cvm.clearError(); vm.screen = Screen.MANAGE },
                     onAddClass = { cvm.clearError(); vm.screen = Screen.SETUP },
                     onWifiMode = { vm.screen = Screen.SEND },
                 )

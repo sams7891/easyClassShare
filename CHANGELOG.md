@@ -20,6 +20,20 @@ project uses [Semantic Versioning](https://semver.org/).
   them from the class name at the top (with "Add a class").
 - New, calmer look: real icons instead of emoji, plainer wording, a classroom
   colour palette (chalkboard green, paper, pencil yellow).
+- New teacher screen: Sound and "Eyes on me" tiles at the top, a **Share** tab
+  and a **Tablets** tab; codes and teachers moved to **Class settings**.
+- **Read receipts**: "Opened by 18 of 24" on every shared link, with the names
+  of tablets that haven't opened it. Tapping a link notification opens it directly.
+- **Send to single tablets** instead of the whole class.
+- **Timed mute** (10 to 60 minutes); sound comes back by itself.
+- **Battery level and "last seen"** for every tablet.
+- **Delete** something shared from all tablets.
+- **Eyes on me**: a full-screen message on every student tablet until the
+  teacher ends it.
+- Teachers can **rename tablets**.
+
+### Fixed
+- Muting the class no longer disabled the send button and showed "Sending…".
 
 ### Changed
 - The same-Wi-Fi mode is still there for quick sharing without internet.

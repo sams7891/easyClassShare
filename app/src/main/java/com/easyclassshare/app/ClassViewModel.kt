@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.easyclassshare.app.data.ShareMessage
+import com.easyclassshare.app.online.Attention
 import com.easyclassshare.app.online.ClassCodes
 import com.easyclassshare.app.online.ClassRepository
 import com.easyclassshare.app.online.DeviceInfo
@@ -15,11 +16,15 @@ import com.easyclassshare.app.online.LocalSetup
 import com.easyclassshare.app.online.Membership
 import com.easyclassshare.app.online.OnlineConfig
 import com.easyclassshare.app.online.Role
+import com.easyclassshare.app.online.SentMessage
 import com.easyclassshare.app.online.SoundSettings
 import com.easyclassshare.app.online.TeacherInfo
 import com.easyclassshare.app.service.ClassService
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,7 +39,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
-/** State and actions for online classes (the one-time setup, the class screens and Manage class). */
+/** State and actions for online classes (the one-time setup, the class screens and class settings). */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClassViewModel(application: Application) : AndroidViewModel(application) {
     val isConfigured: Boolean = OnlineConfig.isConfigured
@@ -63,13 +68,30 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
             if (name != null) LocalSetup.updateClassName(m.classId, name)
         }
     }
-    val messages: StateFlow<List<ShareMessage>> = live(emptyList()) { ClassRepository.messages(it.classId) }
+    val myUid: StateFlow<String?> = live(null) { flow { emit(ClassRepository.uid()) } }
+
+    /** Server clock minus device clock, for timed mutes. */
+    val serverOffset: StateFlow<Long> = live(0L) { ClassRepository.serverTimeOffset() }
+
+    val attention: StateFlow<Attention?> = live(null) { ClassRepository.attention(it.classId) }
+
+    // Student only
+    val messages: StateFlow<List<ShareMessage>> = live(emptyList()) {
+        if (it.role == Role.STUDENT) ClassRepository.messages(it.classId) else flowOf(emptyList())
+    }
     val mySoundAllowed: StateFlow<Boolean> = live(true) {
         if (it.role == Role.STUDENT) ClassRepository.soundAllowedForMe(it.classId) else flowOf(true)
     }
-    val myUid: StateFlow<String?> = live(null) { flow { emit(ClassRepository.uid()) } }
+
+    /** The name shown for this tablet; a teacher may have renamed it. */
+    val myDeviceName: StateFlow<String?> = live(null) {
+        if (it.role == Role.STUDENT) ClassRepository.myDeviceName(it.classId) else flowOf(null)
+    }
 
     // Teacher only
+    val sent: StateFlow<List<SentMessage>> = live(emptyList(), teacherOnly = true) {
+        ClassRepository.sentMessages(it.classId)
+    }
     val sound: StateFlow<SoundSettings> = live(SoundSettings.DEFAULT, teacherOnly = true) {
         ClassRepository.soundSettings(it.classId)
     }
@@ -81,7 +103,11 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     }
     val codes: StateFlow<ClassCodes?> = live(null, teacherOnly = true) { ClassRepository.codes(it.classId) }
 
+    /** A class action (sound, codes, removing...) is running. Sending has its own flag, [sending]. */
     var busy by mutableStateOf(false)
+        private set
+
+    var sending by mutableStateOf(false)
         private set
 
     /** String resource of the last error to show, if any. */
@@ -90,6 +116,11 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
 
     var draft by mutableStateOf("")
         private set
+
+    /** Who the next message goes to: null = the whole class, else these tablets. */
+    var recipients by mutableStateOf<Set<String>?>(null)
+        private set
+
     var sendResult by mutableStateOf<SendResult?>(null)
         private set
 
@@ -136,6 +167,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     fun switchClass(classId: String) {
         clearError()
         draft = ""
+        recipients = null
         LocalSetup.setActive(classId)
     }
 
@@ -150,10 +182,23 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
         LocalSetup.remove(m)
     }
 
+    // ---------------------------------------------------------------- student
+
+    /** Reports to the teachers that this tablet opened [messageId]; each message is reported once. */
+    fun markOpened(messageId: String) {
+        val m = membership.value ?: return
+        if (m.role != Role.STUDENT) return
+        reportOpened(m.classId, messageId)
+    }
+
     // ---------------------------------------------------------------- teacher
 
     fun updateDraft(text: String) {
         draft = text.take(ShareMessage.MAX_CONTENT_LENGTH)
+    }
+
+    fun updateRecipients(uids: Set<String>?) {
+        recipients = uids?.takeIf { it.isNotEmpty() }
     }
 
     fun clearSendResult(result: SendResult) {
@@ -163,11 +208,12 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     fun send() {
         val m = membership.value ?: return
         val content = draft.trim()
-        if (content.isEmpty() || busy) return
-        busy = true
+        if (content.isEmpty() || sending) return
+        val targets = recipients
+        sending = true
         viewModelScope.launch {
             val ok = try {
-                withTimeout(SEND_TIMEOUT_MS) { ClassRepository.send(m.classId, m.name, content) }
+                withTimeout(SEND_TIMEOUT_MS) { ClassRepository.send(m.classId, m.name, content, targets) }
                 true
             } catch (e: TimeoutCancellationException) {
                 false
@@ -176,17 +222,40 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 false
             } finally {
-                busy = false
+                sending = false
             }
-            if (ok) draft = ""
+            if (ok) {
+                draft = ""
+                recipients = null
+            }
             sendResult = SendResult(ok)
         }
     }
 
+    fun deleteMessage(message: SentMessage) = teacherAction { ClassRepository.deleteMessage(it, message) }
+
     fun setClassSound(allowed: Boolean) = teacherAction { ClassRepository.setClassSound(it, allowed) }
+
+    /** Mutes the whole class; sound comes back by itself after [minutes]. */
+    fun muteFor(minutes: Int) = teacherAction {
+        val until = System.currentTimeMillis() + serverOffset.value + minutes * 60_000L
+        ClassRepository.setClassSound(it, allowed = false, mutedUntil = until)
+    }
 
     fun setDeviceSound(deviceUid: String, allowed: Boolean) =
         teacherAction { ClassRepository.setDeviceSound(it, deviceUid, allowed) }
+
+    fun renameDevice(deviceUid: String, name: String) {
+        val clean = name.trim().take(MAX_NAME)
+        if (clean.isEmpty()) return
+        teacherAction { ClassRepository.renameDevice(it, deviceUid, clean) }
+    }
+
+    /** Puts "Eyes on me" on every student tablet, or takes it away. */
+    fun setAttention(on: Boolean, text: String) = teacherAction {
+        val m = membership.value ?: return@teacherAction
+        ClassRepository.setAttention(it, if (on) Attention(text, m.name) else null)
+    }
 
     fun removeDevice(deviceUid: String) = teacherAction { ClassRepository.removeDevice(it, deviceUid) }
 
@@ -224,10 +293,32 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private companion object {
-        const val STOP_TIMEOUT_MS = 5_000L
-        const val ACTION_TIMEOUT_MS = 20_000L
-        const val SEND_TIMEOUT_MS = 15_000L
-        const val MAX_NAME = 40
+    companion object {
+        private const val STOP_TIMEOUT_MS = 5_000L
+        private const val ACTION_TIMEOUT_MS = 20_000L
+        private const val SEND_TIMEOUT_MS = 15_000L
+        private const val MAX_NAME = 40
+
+        /** Fire-and-forget "opened" report; also used when a link is opened from a notification. */
+        fun reportOpened(classId: String, messageId: String) {
+            if (!LocalSetup.rememberOpened(messageId)) return
+            OpenedReporter.report(classId, messageId)
+        }
+    }
+}
+
+/** Sends "opened" receipts on the app's own scope so they finish even if the screen closes. */
+private object OpenedReporter {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    fun report(classId: String, messageId: String) {
+        scope.launch {
+            try {
+                withTimeout(30_000L) { ClassRepository.markOpened(classId, messageId) }
+            } catch (e: Exception) {
+                // Includes the timeout. Report again the next time it is opened.
+                LocalSetup.forgetOpened(messageId)
+            }
+        }
     }
 }

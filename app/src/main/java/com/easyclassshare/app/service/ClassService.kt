@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
@@ -23,8 +24,12 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
@@ -35,6 +40,7 @@ import kotlinx.coroutines.launch
 class ClassService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var enforcer: SoundEnforcer
+    private lateinit var overlay: AttentionOverlay
     private var tone: ToneGenerator? = null
     private var classId: String? = null
 
@@ -43,6 +49,7 @@ class ClassService : Service() {
     override fun onCreate() {
         super.onCreate()
         enforcer = SoundEnforcer(this)
+        overlay = AttentionOverlay(this)
         tone = runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80) }.getOrNull()
         Notifications.createChannels(this)
         val notification = Notifications.ongoing(this, soundAllowed = !enforcer.isMuted)
@@ -63,13 +70,42 @@ class ClassService : Service() {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Started again each time the app opens: the "Display over other apps" switch may have changed.
+        classId?.let { reportCanLock(it) }
+        return START_STICKY
+    }
+
+    private fun reportCanLock(classId: String) {
+        ClassRepository.reportStatus(classId, mapOf("canLock" to AttentionOverlay.canShow(this)))
+    }
 
     private suspend fun runFor(membership: Membership) = coroutineScope {
         classId = membership.classId
 
         launch {
-            ClassRepository.presence(membership.classId).catch { }.collect { }
+            ClassRepository.presence(membership.classId).catch { }.collect { reportCanLock(membership.classId) }
+        }
+        launch {
+            batteryStatus().collect { (level, charging) ->
+                ClassRepository.reportStatus(membership.classId, mapOf("battery" to level, "charging" to charging))
+            }
+        }
+        launch {
+            try {
+                ClassRepository.attention(membership.classId).catch { }.collect { attention ->
+                    if (attention == null) {
+                        overlay.hide()
+                        Notifications.cancelAttention(this@ClassService)
+                    } else if (!overlay.show(attention.text, attention.from) && !AppVisibility.isForeground) {
+                        // No permission to cover the screen: the app shows it when opened.
+                        Notifications.attention(this@ClassService, attention)
+                    }
+                }
+            } finally {
+                overlay.hide()
+                Notifications.cancelAttention(this@ClassService)
+            }
         }
         launch {
             ClassRepository.isStillMember(membership).catch { }.collect { stillMember ->
@@ -92,7 +128,7 @@ class ClassService : Service() {
                 if (AppVisibility.isForeground) {
                     tone?.startTone(ToneGenerator.TONE_PROP_ACK, 150)
                 } else {
-                    Notifications.newMessage(this@ClassService, newest)
+                    Notifications.newMessage(this@ClassService, newest, membership.classId)
                 }
             }
         }
@@ -128,7 +164,35 @@ class ClassService : Service() {
         }
     }
 
+    /** Battery level (0-100, in steps of 5 so it isn't sent all the time) and whether it is charging. */
+    private fun batteryStatus(): Flow<Pair<Int, Boolean>> = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                intent?.let { batteryOf(it)?.let { status -> trySend(status) } }
+            }
+        }
+        val sticky = ContextCompat.registerReceiver(
+            this@ClassService,
+            receiver,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        sticky?.let { batteryOf(it)?.let { status -> trySend(status) } }
+        awaitClose { unregisterReceiver(receiver) }
+    }.distinctUntilChanged()
+
+    private fun batteryOf(intent: Intent): Pair<Int, Boolean>? {
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        if (level < 0 || scale <= 0) return null
+        val percent = (level * 100 / scale).coerceIn(0, 100)
+        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val charging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+        return (percent / 5 * 5) to charging
+    }
+
     override fun onDestroy() {
+        overlay.hide()
         classId?.let { id -> if (LocalSetup.membership.value?.classId == id) ClassRepository.markOffline(id) }
         scope.cancel()
         tone?.release()

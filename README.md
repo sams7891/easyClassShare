@@ -36,12 +36,22 @@ Install the same version on every tablet.
    and switches between classes the same way.
 
 ### In class
-- Type or paste a link and tap **🚀 Send to my class!** Every tablet in the class
-  gets it, on any network, even when the app is in the background (as a notification).
-- **🔇 Mute all / 🔊 Sound on** switches the sound of all student tablets.
-- **👥 Manage class** shows the codes, all tablets (online or not) with a
-  **sound switch for each tablet**, and the teachers. From there you can remove
-  tablets or teachers, and make new codes if a code got out.
+The teacher screen has two status tiles at the top and two tabs:
+
+- **Sound**: tap to switch sound on, mute until you switch it back on, or mute
+  for 10 to 60 minutes (sound then comes back by itself).
+- **Eyes on me**: tap to cover every student screen with "Eyes on your teacher";
+  tap again to end it. Over other apps this needs the tablet's *Display over
+  other apps* permission (the student screen asks for it once; the Tablets tab
+  shows which tablets haven't allowed it yet).
+- **Share** tab: type or paste a link, choose **To: Whole class** or single
+  tablets, and send. Every shared item shows **"Opened by 18 of 24"**; tap it
+  to see who hasn't opened it yet. Shared items can be deleted from all tablets.
+- **Tablets** tab: every tablet with online / last seen, battery level, and its
+  own sound switch. The ⋮ menu renames a tablet, sends something only to that
+  tablet, or removes it from the class.
+- **Class settings** (gear icon): class and teacher codes (renewable), the
+  teachers of the class, and leaving the class.
 
 ### How the sound lock works
 While sound is off for a tablet, the app sets the tablet's volume (media,
@@ -53,7 +63,7 @@ uninstall the app; to prevent that, the tablets need a device-management
 (MDM / kiosk) setup, which is outside this app.
 
 A student tablet can only leave the class when a teacher types the teacher code
-(or a teacher removes it in *Manage class*).
+(or a teacher removes it in the Tablets tab).
 
 ### One-time Firebase setup (for whoever builds the app)
 Online classes use a free [Firebase](https://firebase.google.com/) project.
@@ -80,7 +90,8 @@ of a class can send, see the codes, change sound or remove tablets; students
 only see their own class.
 
 Data stored online: class name, teacher and student first names, the shared
-links/messages (newest 50 shown), and which tablets are online. No e-mail
+links/messages (newest 50 shown), which tablets opened them, and each tablet's
+online status and battery level. No e-mail
 addresses or accounts.
 
 ## 📶 Same-Wi-Fi mode

@@ -1,5 +1,6 @@
 package com.easyclassshare.app.online
 
+import com.easyclassshare.app.data.LinkUtils
 import java.security.SecureRandom
 
 enum class Role { STUDENT, TEACHER }
@@ -18,16 +19,61 @@ data class Membership(
 )
 
 /** A student tablet in the class, as the teacher sees it. */
-data class DeviceInfo(val uid: String, val name: String, val online: Boolean)
+data class DeviceInfo(
+    val uid: String,
+    val name: String,
+    val online: Boolean,
+    /** Server time the tablet last connected or disconnected. */
+    val lastSeen: Long? = null,
+    /** Battery level 0-100, if the tablet reported one. */
+    val battery: Int? = null,
+    val charging: Boolean = false,
+    /** Whether the tablet allows the full-screen "Eyes on me" message (null = not reported yet). */
+    val canLock: Boolean? = null,
+) {
+    val batteryLow: Boolean get() = battery != null && battery <= LOW_BATTERY && !charging
+
+    companion object {
+        const val LOW_BATTERY = 20
+    }
+}
+
+/** Something a teacher shared, with who it went to and who opened it. */
+data class SentMessage(
+    val id: String,
+    val from: String,
+    val content: String,
+    val timestamp: Long,
+    /** The tablets it was sent to, or null if it went to the whole class. */
+    val targets: Set<String>?,
+    /** Tablets that opened the link (or saw the text). */
+    val openedBy: Set<String> = emptySet(),
+) {
+    val isLink: Boolean get() = LinkUtils.looksLikeLink(content)
+}
+
+/** The full-screen "Eyes on me" message a teacher puts on every student tablet. */
+data class Attention(val text: String, val from: String)
 
 data class TeacherInfo(val uid: String, val name: String)
 
 data class ClassCodes(val studentCode: String, val teacherCode: String)
 
-/** Sound switches set by the teachers: one for the whole class plus optional per-device ones. */
-data class SoundSettings(val classWide: Boolean?, val perDevice: Map<String, Boolean>) {
-    val classWideAllowed: Boolean get() = SoundPolicy.isAllowed(classWide, null)
-    fun isAllowed(deviceUid: String): Boolean = SoundPolicy.isAllowed(classWide, perDevice[deviceUid])
+/**
+ * Sound switches set by the teachers: one for the whole class plus optional per-device ones.
+ * A class-wide mute can end by itself at [mutedUntil] (server time).
+ */
+data class SoundSettings(
+    val classWide: Boolean?,
+    val perDevice: Map<String, Boolean>,
+    val mutedUntil: Long? = null,
+) {
+    fun classWideAllowed(now: Long): Boolean = SoundPolicy.isAllowed(classWide, null, mutedUntil, now)
+    fun isAllowed(deviceUid: String, now: Long): Boolean =
+        SoundPolicy.isAllowed(classWide, perDevice[deviceUid], mutedUntil, now)
+
+    /** End of a timed class-wide mute that is still running, else null. */
+    fun timerEnd(now: Long): Long? = mutedUntil?.takeIf { classWide == false && it > now }
 
     companion object {
         val DEFAULT = SoundSettings(null, emptyMap())
@@ -35,8 +81,15 @@ data class SoundSettings(val classWide: Boolean?, val perDevice: Map<String, Boo
 }
 
 object SoundPolicy {
-    /** A device's own switch wins over the class-wide one. Sound is allowed until a teacher turns it off. */
-    fun isAllowed(classWide: Boolean?, deviceOverride: Boolean?): Boolean = deviceOverride ?: classWide ?: true
+    /**
+     * A device's own switch wins over the class-wide one. Sound is allowed until a teacher
+     * turns it off; a timed class-wide mute ends at [mutedUntil].
+     */
+    fun isAllowed(classWide: Boolean?, deviceOverride: Boolean?, mutedUntil: Long? = null, now: Long = 0L): Boolean {
+        if (deviceOverride != null) return deviceOverride
+        if (classWide == false && mutedUntil != null && now >= mutedUntil) return true
+        return classWide ?: true
+    }
 }
 
 /** Short codes typed in once to join a class. No 0/O or 1/I so they are easy to read aloud. */

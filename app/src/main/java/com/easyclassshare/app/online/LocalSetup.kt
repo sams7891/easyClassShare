@@ -48,7 +48,10 @@ object LocalSetup {
         } else {
             _memberships.value.filter { it.role == Role.TEACHER && it.classId != membership.classId } + membership
         }
-        if (membership.role == Role.STUDENT) lastAnnouncedMessageTime = 0L
+        if (membership.role == Role.STUDENT) {
+            lastAnnouncedMessageTime = 0L
+            prefs.edit().remove(KEY_OPENED).apply()
+        }
         _removedFrom.value = null
         publish(list, membership.classId)
     }
@@ -89,6 +92,25 @@ object LocalSetup {
     var lastAnnouncedMessageTime: Long
         get() = prefs.getLong(KEY_LAST_MESSAGE, 0L)
         set(value) = prefs.edit().putLong(KEY_LAST_MESSAGE, value).apply()
+
+    /**
+     * Remembers message ids this tablet already reported as opened, so each one is sent once.
+     * Returns false if [messageId] was already reported.
+     */
+    @Synchronized
+    fun rememberOpened(messageId: String): Boolean {
+        val known = prefs.getString(KEY_OPENED, "").orEmpty().split(',').filter { it.isNotEmpty() }
+        if (messageId in known) return false
+        val updated = (known + messageId).takeLast(MAX_REMEMBERED_OPENED)
+        prefs.edit().putString(KEY_OPENED, updated.joinToString(",")).apply()
+        return true
+    }
+
+    @Synchronized
+    fun forgetOpened(messageId: String) {
+        val known = prefs.getString(KEY_OPENED, "").orEmpty().split(',').filter { it.isNotEmpty() && it != messageId }
+        prefs.edit().putString(KEY_OPENED, known.joinToString(",")).apply()
+    }
 
     private fun publish(list: List<Membership>, activeClassId: String?) {
         val active = pickActive(list, activeClassId)
@@ -150,6 +172,8 @@ object LocalSetup {
     private const val KEY_LIST = "memberships"
     private const val KEY_ACTIVE = "active_class"
     private const val KEY_LAST_MESSAGE = "last_message_time"
+    private const val KEY_OPENED = "opened_ids"
+    private const val MAX_REMEMBERED_OPENED = 200
     private const val OLD_KEY_CLASS = "class_id"
     private const val OLD_KEY_ROLE = "role"
     private const val OLD_KEY_NAME = "name"
