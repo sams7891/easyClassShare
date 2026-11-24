@@ -7,28 +7,31 @@ import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -51,18 +53,18 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.easyclassshare.app.ClassViewModel
 import com.easyclassshare.app.R
-import com.easyclassshare.app.data.LinkUtils
 import com.easyclassshare.app.data.ShareMessage
+import com.easyclassshare.app.online.Membership
+import com.easyclassshare.app.ui.components.AppTopBar
 import com.easyclassshare.app.ui.components.BigButton
-import com.easyclassshare.app.ui.components.KidTopBar
-import com.easyclassshare.app.ui.theme.Berry
-import com.easyclassshare.app.ui.theme.BerryLight
-import com.easyclassshare.app.ui.theme.ClassPurple
-import com.easyclassshare.app.ui.theme.Ink
-import com.easyclassshare.app.ui.theme.Leaf
-import com.easyclassshare.app.ui.theme.Outline
-import com.easyclassshare.app.ui.theme.PurpleLight
-import com.easyclassshare.app.ui.theme.SkyLight
+import com.easyclassshare.app.ui.components.Notice
+import com.easyclassshare.app.ui.components.Panel
+import com.easyclassshare.app.ui.components.SoftButton
+import com.easyclassshare.app.ui.components.Tone
+import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.Brick
+import com.easyclassshare.app.ui.theme.Chalk
+import com.easyclassshare.app.ui.theme.InkSoft
 import kotlinx.coroutines.delay
 import java.util.Date
 
@@ -71,6 +73,7 @@ import java.util.Date
 fun StudentClassScreen(cvm: ClassViewModel) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
+    val membership by cvm.membership.collectAsState()
     val className by cvm.className.collectAsState()
     val messages by cvm.messages.collectAsState()
     val soundAllowed by cvm.mySoundAllowed.collectAsState()
@@ -94,9 +97,8 @@ fun StudentClassScreen(cvm: ClassViewModel) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(0)
     }
 
-    Scaffold(
-        topBar = { KidTopBar("🏫 " + (className ?: stringResource(R.string.class_default_name)), ClassPurple, Color.White, null) },
-    ) { padding ->
+    val title = className ?: membership?.className?.ifBlank { null } ?: stringResource(R.string.class_default_name)
+    Scaffold(topBar = { AppTopBar(title, onBack = null, subtitle = membership?.name) }) { padding ->
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -105,9 +107,9 @@ fun StudentClassScreen(cvm: ClassViewModel) {
         ) {
             item(key = "sound") {
                 if (soundAllowed) {
-                    InfoCard("🔊", stringResource(R.string.student_sound_on), SkyLight)
+                    Notice(stringResource(R.string.student_sound_on), Tone.GOOD, drawableIcon(R.drawable.ic_volume_on))
                 } else {
-                    InfoCard("🔇", stringResource(R.string.student_sound_off), BerryLight)
+                    Notice(stringResource(R.string.student_sound_off), Tone.BAD, drawableIcon(R.drawable.ic_volume_off))
                 }
             }
             if (messages.isEmpty()) {
@@ -128,7 +130,7 @@ fun StudentClassScreen(cvm: ClassViewModel) {
             }
             item(key = "leave") {
                 TextButton(onClick = { cvm.clearError(); showLeave = true }) {
-                    Text(stringResource(R.string.student_leave), style = MaterialTheme.typography.bodyMedium, color = Ink.copy(alpha = 0.6f))
+                    Text(stringResource(R.string.student_leave), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
                 }
             }
         }
@@ -142,18 +144,13 @@ fun StudentClassScreen(cvm: ClassViewModel) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.student_leave_text))
-                    OutlinedTextField(
-                        value = code,
-                        onValueChange = { code = it.uppercase().take(12) },
-                        label = { Text(stringResource(R.string.setup_teacher_code)) },
-                        singleLine = true,
-                    )
+                    CodeField(code, { code = it }, stringResource(R.string.setup_teacher_code))
                     ErrorText(cvm.error)
                 }
             },
             confirmButton = {
                 TextButton(onClick = { cvm.leave(code) }, enabled = !cvm.busy && code.isNotBlank()) {
-                    Text(stringResource(R.string.leave_button))
+                    Text(stringResource(R.string.leave_button), color = Brick)
                 }
             },
             dismissButton = {
@@ -163,15 +160,22 @@ fun StudentClassScreen(cvm: ClassViewModel) {
     }
 }
 
-/** What a teacher sees after the one-time setup: send to the class, quick sound switch, manage. */
+/** A teacher's class: share a link, switch sound, manage the class, switch to another class. */
 @Composable
-fun TeacherClassScreen(cvm: ClassViewModel, onManage: () -> Unit, onWifiMode: () -> Unit) {
-    val clipboard = LocalClipboardManager.current
+fun TeacherClassScreen(
+    cvm: ClassViewModel,
+    onManage: () -> Unit,
+    onAddClass: () -> Unit,
+    onWifiMode: () -> Unit,
+) {
+    val membership by cvm.membership.collectAsState()
+    val memberships by cvm.memberships.collectAsState()
     val className by cvm.className.collectAsState()
     val messages by cvm.messages.collectAsState()
     val sound by cvm.sound.collectAsState()
     val devices by cvm.devices.collectAsState()
     val result = cvm.sendResult
+    var showClasses by remember { mutableStateOf(false) }
 
     LaunchedEffect(result) {
         if (result != null) {
@@ -180,8 +184,26 @@ fun TeacherClassScreen(cvm: ClassViewModel, onManage: () -> Unit, onWifiMode: ()
         }
     }
 
+    val title = className ?: membership?.className?.ifBlank { null } ?: stringResource(R.string.class_default_name)
     Scaffold(
-        topBar = { KidTopBar("🏫 " + (className ?: stringResource(R.string.class_default_name)), ClassPurple, Color.White, null) },
+        topBar = {
+            Box {
+                AppTopBar(
+                    title = title,
+                    onBack = null,
+                    subtitle = stringResource(R.string.teacher_devices_summary, devices.count { it.online }, devices.size),
+                    onTitleClick = { showClasses = true },
+                )
+                ClassMenu(
+                    expanded = showClasses,
+                    classes = memberships,
+                    activeClassId = membership?.classId,
+                    onDismiss = { showClasses = false },
+                    onPick = { showClasses = false; cvm.switchClass(it) },
+                    onAdd = { showClasses = false; onAddClass() },
+                )
+            }
+        },
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -193,59 +215,25 @@ fun TeacherClassScreen(cvm: ClassViewModel, onManage: () -> Unit, onWifiMode: ()
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                val online = devices.count { it.online }
-                Text(
-                    stringResource(R.string.teacher_devices_summary, online, devices.size),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = cvm.draft,
-                    onValueChange = cvm::updateDraft,
-                    label = { Text(stringResource(R.string.send_what_label)) },
-                    placeholder = { Text(stringResource(R.string.send_what_hint)) },
-                    minLines = 3,
-                    shape = RoundedCornerShape(20.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
-                        onClick = { clipboard.getText()?.text?.let(cvm::updateDraft) },
-                        shape = RoundedCornerShape(18.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                    ) { Text(stringResource(R.string.paste), style = MaterialTheme.typography.titleMedium) }
-                    OutlinedButton(
-                        onClick = { cvm.updateDraft("") },
-                        enabled = cvm.draft.isNotEmpty(),
-                        shape = RoundedCornerShape(18.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                    ) { Text(stringResource(R.string.clear), style = MaterialTheme.typography.titleMedium) }
-                }
-            }
-            item {
-                BigButton(
-                    text = stringResource(if (cvm.busy) R.string.sending else R.string.send_to_class),
-                    onClick = cvm::send,
-                    containerColor = Leaf,
-                    contentColor = Color.White,
-                    enabled = cvm.draft.isNotBlank() && !cvm.busy,
+                ShareComposer(
+                    draft = cvm.draft,
+                    onDraftChange = cvm::updateDraft,
+                    sendLabel = stringResource(if (cvm.busy) R.string.sending else R.string.send_to_class),
+                    sending = cvm.busy,
+                    onSend = cvm::send,
                 )
             }
             if (result != null) {
                 item {
-                    InfoCard(
-                        if (result.success) "🎉" else "😕",
-                        stringResource(if (result.success) R.string.send_class_ok else R.string.send_class_failed),
-                        if (result.success) SkyLight else BerryLight,
-                    )
+                    if (result.success) {
+                        Notice(stringResource(R.string.send_class_ok), Tone.GOOD, Icons.Filled.CheckCircle)
+                    } else {
+                        Notice(stringResource(R.string.send_class_failed), Tone.BAD, Icons.Filled.Warning)
+                    }
                 }
             }
             item {
-                SoundSwitchRow(
+                SoundPanel(
                     allowed = sound.classWideAllowed,
                     enabled = !cvm.busy,
                     onMuteAll = { cvm.setClassSound(false) },
@@ -254,74 +242,111 @@ fun TeacherClassScreen(cvm: ClassViewModel, onManage: () -> Unit, onWifiMode: ()
             }
             item { ErrorText(cvm.error) }
             item {
-                BigButton(stringResource(R.string.manage_class), onManage, ClassPurple, Color.White)
-            }
-            item {
-                OutlinedButton(
-                    onClick = onWifiMode,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                ) { Text(stringResource(R.string.teacher_wifi_mode), style = MaterialTheme.typography.titleMedium) }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SoftButton(
+                        stringResource(R.string.manage_class),
+                        onManage,
+                        modifier = Modifier.weight(1f),
+                        icon = drawableIcon(R.drawable.ic_group),
+                    )
+                }
             }
             if (messages.isNotEmpty()) {
-                item { Text(stringResource(R.string.sent_history_title), style = MaterialTheme.typography.titleLarge) }
-                items(messages, key = { it.id }) { message -> ClassMessageCard(message) }
+                item { Text(stringResource(R.string.teacher_recent), style = MaterialTheme.typography.titleLarge) }
+                items(messages.take(RECENT_COUNT), key = { it.id }) { message -> SentLine(message) }
+            }
+            item {
+                TextButton(onClick = onWifiMode) {
+                    Text(stringResource(R.string.teacher_wifi_mode), color = InkSoft)
+                }
             }
         }
     }
 }
 
-/** "Mute everyone" / "Sound on for everyone" buttons with the current class-wide state. */
+private const val RECENT_COUNT = 10
+
+/** Drop-down list of the teacher's classes, plus "Add a class". */
 @Composable
-internal fun SoundSwitchRow(allowed: Boolean, enabled: Boolean, onMuteAll: () -> Unit, onAllowAll: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = PurpleLight, contentColor = Ink),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                stringResource(if (allowed) R.string.sound_class_on else R.string.sound_class_off),
-                style = MaterialTheme.typography.titleMedium,
+private fun ClassMenu(
+    expanded: Boolean,
+    classes: List<Membership>,
+    activeClassId: String?,
+    onDismiss: () -> Unit,
+    onPick: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        Text(
+            stringResource(R.string.classes_title),
+            style = MaterialTheme.typography.bodyMedium,
+            color = InkSoft,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        for (m in classes) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        m.className.ifBlank { stringResource(R.string.class_default_name) },
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                leadingIcon = {
+                    if (m.classId == activeClassId) Icon(Icons.Filled.Check, contentDescription = null, tint = Chalk)
+                },
+                onClick = { onPick(m.classId) },
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BigButton(
-                    text = stringResource(R.string.sound_mute_all),
-                    onClick = onMuteAll,
-                    containerColor = Berry,
-                    contentColor = Color.White,
-                    modifier = Modifier.weight(1f),
-                    enabled = enabled,
-                )
-                BigButton(
-                    text = stringResource(R.string.sound_allow_all),
-                    onClick = onAllowAll,
-                    containerColor = Leaf,
-                    contentColor = Color.White,
-                    modifier = Modifier.weight(1f),
-                    enabled = enabled,
-                )
-            }
+        }
+        HorizontalDivider()
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.classes_add), style = MaterialTheme.typography.titleMedium) },
+            leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
+            onClick = onAdd,
+        )
+    }
+}
+
+/** Current class-wide sound state with "Mute all" / "Sound on". */
+@Composable
+internal fun SoundPanel(allowed: Boolean, enabled: Boolean, onMuteAll: () -> Unit, onAllowAll: () -> Unit) {
+    Panel {
+        Text(stringResource(R.string.sound_title), style = MaterialTheme.typography.titleMedium)
+        if (allowed) {
+            Notice(stringResource(R.string.sound_class_on), Tone.GOOD, drawableIcon(R.drawable.ic_volume_on))
+        } else {
+            Notice(stringResource(R.string.sound_class_off), Tone.BAD, drawableIcon(R.drawable.ic_volume_off))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BigButton(
+                text = stringResource(R.string.sound_mute_all),
+                onClick = onMuteAll,
+                modifier = Modifier.weight(1f),
+                icon = drawableIcon(R.drawable.ic_volume_off),
+                containerColor = Brick,
+                enabled = enabled,
+            )
+            BigButton(
+                text = stringResource(R.string.sound_allow_all),
+                onClick = onAllowAll,
+                modifier = Modifier.weight(1f),
+                icon = drawableIcon(R.drawable.ic_volume_on),
+                enabled = enabled,
+            )
         }
     }
 }
 
 @Composable
-private fun ClassMessageCard(message: ShareMessage) {
+private fun SentLine(message: ShareMessage) {
     val context = LocalContext.current
     val time = remember(message.timestamp) { DateFormat.getTimeFormat(context).format(Date(message.timestamp)) }
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White, contentColor = Ink),
-        border = BorderStroke(1.dp, Outline),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("${message.senderName} · $time", style = MaterialTheme.typography.bodyMedium, color = Ink.copy(alpha = 0.7f))
-            Text(
-                (if (LinkUtils.looksLikeLink(message.content)) "🔗 " else "💬 ") + message.content,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+    Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Text("${message.senderName} · $time", style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+        Text(
+            message.content,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

@@ -16,6 +16,10 @@ project uses [Semantic Versioning](https://semver.org/).
   sound again.
 - Student tablets reconnect automatically after a restart or app update, and
   can only leave a class with the teacher code.
+- Teachers can be in **several classes** on one device and switch between
+  them from the class name at the top (with "Add a class").
+- New, calmer look: real icons instead of emoji, plainer wording, a classroom
+  colour palette (chalkboard green, paper, pencil yellow).
 
 ### Changed
 - The same-Wi-Fi mode is still there for quick sharing without internet.

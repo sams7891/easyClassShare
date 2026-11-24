@@ -4,8 +4,18 @@ import java.security.SecureRandom
 
 enum class Role { STUDENT, TEACHER }
 
-/** This device's place in an online class. Saved on the device after the one-time setup. */
-data class Membership(val classId: String, val role: Role, val name: String)
+/**
+ * This device's place in an online class, saved on the device after the one-time setup.
+ * A student tablet has exactly one; a teacher can have several (one per class).
+ */
+data class Membership(
+    val classId: String,
+    val role: Role,
+    /** The person's name as shown to the class. */
+    val name: String,
+    /** Last known class name, so the class list shows names even before going online. */
+    val className: String = "",
+)
 
 /** A student tablet in the class, as the teacher sees it. */
 data class DeviceInfo(val uid: String, val name: String, val online: Boolean)

@@ -54,7 +54,7 @@ android {
         targetSdk = 34
         // Bump both of these for every release (see CHANGELOG.md).
         versionCode = 5
-        versionName = "1.3.0-beta.1"
+        versionName = "1.3.0-beta.2"
 
         buildConfigField("String", "FIREBASE_API_KEY", "\"${firebaseConfig["apiKey"].orEmpty()}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${firebaseConfig["appId"].orEmpty()}\"")
@@ -107,6 +107,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
 

@@ -84,7 +84,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
     val membership by cvm.membership.collectAsState()
-    val wasRemoved by cvm.wasRemoved.collectAsState()
+    val memberships by cvm.memberships.collectAsState()
+    val removedFrom by cvm.removedFrom.collectAsState()
     val home = if (membership != null) Screen.CLASS else Screen.HOME
     val goHome = { vm.screen = home }
 
@@ -93,7 +94,7 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
         val m = membership
         val target = when {
             m == null && vm.screen in setOf(Screen.CLASS, Screen.MANAGE) -> Screen.HOME
-            m != null && vm.screen in setOf(Screen.HOME, Screen.SETUP) -> Screen.CLASS
+            m != null && vm.screen == Screen.HOME -> Screen.CLASS
             m?.role == Role.STUDENT && vm.screen != Screen.CLASS -> Screen.CLASS
             else -> null
         }
@@ -116,12 +117,18 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
                 BackHandler(onBack = goHome)
                 ReceiverScreen(vm, onBack = goHome)
             }
-            Screen.SETUP -> SetupScreen(cvm, onBack = goHome)
+            Screen.SETUP -> SetupScreen(
+                cvm,
+                addingClass = memberships.any { it.role == Role.TEACHER },
+                onBack = goHome,
+                onDone = { vm.screen = Screen.CLASS },
+            )
             Screen.CLASS -> when (membership?.role) {
                 Role.STUDENT -> StudentClassScreen(cvm)
                 Role.TEACHER -> TeacherClassScreen(
                     cvm,
                     onManage = { cvm.clearError(); vm.screen = Screen.MANAGE },
+                    onAddClass = { cvm.clearError(); vm.screen = Screen.SETUP },
                     onWifiMode = { vm.screen = Screen.SEND },
                 )
                 null -> Unit
@@ -133,10 +140,19 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
         }
     }
 
-    if (wasRemoved) {
+    val removed = removedFrom
+    if (removed != null) {
         AlertDialog(
             onDismissRequest = cvm::dismissRemovedNotice,
-            text = { Text(stringResource(R.string.removed_notice)) },
+            text = {
+                Text(
+                    if (removed.isBlank()) {
+                        stringResource(R.string.removed_notice_unknown)
+                    } else {
+                        stringResource(R.string.removed_notice, removed)
+                    },
+                )
+            },
             confirmButton = {
                 TextButton(onClick = cvm::dismissRemovedNotice) { Text(stringResource(R.string.ok_button)) }
             },

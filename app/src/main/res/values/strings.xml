@@ -2,124 +2,130 @@
 <resources>
     <string name="app_name">Easy Class Share</string>
 
-    <!-- Home -->
-    <string name="step_pick_role">What do you want to do?</string>
-    <string name="role_send_title">SEND</string>
-    <string name="role_send_subtitle">Share a link with everyone</string>
-    <string name="role_receive_title">RECEIVE</string>
-    <string name="role_receive_subtitle">Get links from the teacher</string>
-    <string name="same_wifi_tip">💡 Same-Wi-Fi sharing needs all tablets on the same Wi-Fi.</string>
-    <string name="role_setup_title">MY CLASS</string>
-    <string name="role_setup_subtitle">One-time setup. Works on any network!</string>
-    <string name="or_same_wifi">…or share on the same Wi-Fi:</string>
-
-
     <!-- Common -->
     <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok_button">OK</string>
+    <string name="yes_button">Yes</string>
+    <string name="remove_button">Remove</string>
+    <string name="leave_button">Leave class</string>
+    <string name="copied">Copied</string>
+    <string name="could_not_open">Could not open this link</string>
+    <string name="default_sender">Teacher</string>
 
-    <!-- Sender -->
-    <string name="send_title">Send</string>
+    <!-- Home -->
+    <string name="home_tagline">Share links with every tablet in your class.</string>
+    <string name="home_class_title">My class</string>
+    <string name="home_class_text">Set up this tablet once. Works on any network, at school or at home.</string>
+    <string name="home_class_button">Set up</string>
+    <string name="home_wifi_title">Same Wi-Fi</string>
+    <string name="home_wifi_text">No internet? Share with tablets on the same Wi-Fi network.</string>
+    <string name="home_wifi_only_text">Share with tablets on the same Wi-Fi network. No internet needed.</string>
+    <string name="role_send_title">Send</string>
+    <string name="role_receive_title">Receive</string>
+
+    <!-- Same Wi-Fi: send -->
+    <string name="send_title">Send on Wi-Fi</string>
     <string name="send_name_label">Your name</string>
-    <string name="send_name_hint">e.g. Ms. Lee</string>
+    <string name="send_name_hint">e.g. Ms Lee</string>
     <string name="send_what_label">What do you want to share?</string>
-    <string name="send_what_hint">Paste a link or type a short message…</string>
+    <string name="send_what_hint">Paste a link or type a short message</string>
     <string name="char_counter">%1$d / %2$d</string>
-    <string name="paste">📋 Paste</string>
-    <string name="clear">🧽 Clear</string>
-    <string name="detected_link">🔗 This is a link. Kids can open it with one tap!</string>
-    <string name="detected_text">💬 This is a message.</string>
-    <string name="send_button">🚀 Send to everyone!</string>
-    <string name="sending">✨ Sending…</string>
-    <string name="send_ok">🎉 Sent! Everyone on the Wi-Fi got it.</string>
-    <string name="send_failed">😕 Oops, could not send. Are you on Wi-Fi?</string>
-    <string name="sent_history_title">Already sent</string>
-    <string name="send_again">🔁 Send again</string>
+    <string name="paste">Paste</string>
+    <string name="clear">Clear</string>
+    <string name="detected_link">This is a link. Students can open it with one tap.</string>
+    <string name="detected_text">This will be shown as a message.</string>
+    <string name="send_button">Send to everyone</string>
+    <string name="sending">Sending…</string>
+    <string name="send_ok">Sent to all tablets on this Wi-Fi.</string>
+    <string name="send_failed">Couldn\'t send. Are you connected to Wi-Fi?</string>
+    <string name="sent_history_title">Sent</string>
+    <string name="send_again">Send again</string>
 
-    <!-- Receiver -->
-    <string name="receive_title">Receive</string>
-    <string name="listening_title">Listening…</string>
-    <string name="listening_subtitle">Waiting for your teacher</string>
+    <!-- Same Wi-Fi: receive -->
+    <string name="receive_title">Receive on Wi-Fi</string>
+    <string name="listening_title">Waiting for your teacher</string>
+    <string name="listening_subtitle">New links will show up here.</string>
     <string name="getting_ready">Getting ready…</string>
-    <string name="listen_error">😕 Can\'t listen right now. Check the Wi-Fi.</string>
+    <string name="listen_error">Can\'t listen right now. Check the Wi-Fi.</string>
     <string name="try_again">Try again</string>
     <string name="empty_title">Nothing here yet</string>
-    <string name="empty_subtitle">When your teacher sends something, it will pop up here!</string>
-    <string name="new_badge">NEW!</string>
-    <string name="default_sender">Your teacher</string>
-    <string name="open_link">🌐 Open</string>
-    <string name="copy">📋 Copy</string>
-    <string name="copied">Copied!</string>
-    <string name="could_not_open">Could not open this link</string>
+    <string name="empty_subtitle">When your teacher shares something, it shows up here.</string>
+    <string name="new_badge">New</string>
+    <string name="open_link">Open</string>
+    <string name="copy">Copy</string>
 
     <!-- Online class: setup -->
-    <string name="setup_title">Set up my class</string>
-    <string name="setup_not_configured">Online classes are not switched on in this version of the app. Ask the person who builds it to follow the Firebase setup in the README.</string>
+    <string name="setup_title">Set up</string>
+    <string name="setup_add_class_title">Add a class</string>
+    <string name="setup_not_configured">Online classes are not switched on in this version of the app. Whoever builds the app can turn them on with the Firebase steps in the README.</string>
     <string name="setup_who">Who uses this tablet?</string>
-    <string name="setup_student_title">STUDENT</string>
-    <string name="setup_student_subtitle">Join my class with a code</string>
-    <string name="setup_teacher_title">TEACHER</string>
+    <string name="setup_student_title">Student</string>
+    <string name="setup_student_subtitle">Join a class with a class code</string>
+    <string name="setup_teacher_title">Teacher</string>
     <string name="setup_teacher_subtitle">Create a class or join one</string>
     <string name="setup_once_tip">You only do this once. The tablet remembers its class, even after a restart.</string>
-    <string name="setup_create_title">NEW CLASS</string>
+    <string name="setup_create_title">New class</string>
     <string name="setup_create_subtitle">Create a class and get its codes</string>
-    <string name="setup_cojoin_title">JOIN AS TEACHER</string>
-    <string name="setup_cojoin_subtitle">Another teacher gave you a teacher code</string>
-    <string name="setup_student_name">Your name</string>
+    <string name="setup_cojoin_title">Join as a teacher</string>
+    <string name="setup_cojoin_subtitle">Use a teacher code from a colleague</string>
+    <string name="setup_student_name">Your first name</string>
+    <string name="setup_name">Your name</string>
     <string name="setup_class_code">Class code</string>
     <string name="setup_teacher_code">Teacher code</string>
-    <string name="setup_class_name">Class name (e.g. 3B)</string>
-    <string name="setup_join_button">🎒 Join my class</string>
-    <string name="setup_cojoin_button">🤝 Join as teacher</string>
-    <string name="setup_create_button">✨ Create class</string>
-    <string name="setup_working">⏳ One moment…</string>
+    <string name="setup_class_name">Class name, e.g. 3B</string>
+    <string name="setup_join_button">Join class</string>
+    <string name="setup_cojoin_button">Join as teacher</string>
+    <string name="setup_create_button">Create class</string>
+    <string name="setup_working">One moment…</string>
 
     <!-- Online class: errors -->
-    <string name="online_error_code">😕 That code doesn\'t work. Check it and try again.</string>
-    <string name="online_error_student_code">That is a student code. Ask for the teacher code.</string>
+    <string name="online_error_code">That code doesn\'t work. Check it and try again.</string>
+    <string name="online_error_student_code">That is a class code for students. Ask for the teacher code.</string>
     <string name="online_error_teacher_code">That is a teacher code. Ask your teacher for the class code.</string>
-    <string name="online_error_leave_code">😕 Wrong teacher code.</string>
-    <string name="online_error_connection">😕 No connection. Check the internet and try again.</string>
-    <string name="online_error_generic">😕 Something went wrong. Check the internet and try again.</string>
+    <string name="online_error_leave_code">That teacher code isn\'t right.</string>
+    <string name="online_error_connection">No connection. Check the internet and try again.</string>
+    <string name="online_error_generic">Something went wrong. Check the internet and try again.</string>
 
     <!-- Online class: student -->
     <string name="class_default_name">My class</string>
-    <string name="student_sound_on">Sound is on.</string>
+    <string name="student_sound_on">Sound is on</string>
     <string name="student_sound_off">Sound is off. Your teacher turned it off.</string>
-    <string name="student_leave">Leave class (teacher only)</string>
+    <string name="student_leave">Leave class</string>
     <string name="student_leave_title">Leave the class?</string>
-    <string name="student_leave_text">A teacher has to type the teacher code to take this tablet out of the class.</string>
-    <string name="removed_notice">This tablet was removed from the class. You can set it up again at any time.</string>
+    <string name="student_leave_text">A teacher needs to enter the teacher code to take this tablet out of the class.</string>
+    <string name="removed_notice">A teacher removed this device from %1$s.</string>
+    <string name="removed_notice_unknown">A teacher removed this device from a class.</string>
 
     <!-- Online class: teacher -->
-    <string name="teacher_devices_summary">🟢 %1$d of %2$d tablets online</string>
-    <string name="send_to_class">🚀 Send to my class!</string>
-    <string name="send_class_ok">Sent! Every tablet in the class gets it, on any network.</string>
-    <string name="send_class_failed">Could not send. Check the internet and try again.</string>
-    <string name="teacher_wifi_mode">📶 Send on same Wi-Fi (no internet)</string>
-    <string name="manage_class">👥 Manage class</string>
-    <string name="sound_class_on">🔊 Sound is on for the class</string>
-    <string name="sound_class_off">🔇 Sound is off for the class</string>
-    <string name="sound_mute_all">🔇 Mute all</string>
-    <string name="sound_allow_all">🔊 Sound on</string>
+    <string name="teacher_devices_summary">%1$d of %2$d tablets online</string>
+    <string name="send_to_class">Send to class</string>
+    <string name="send_class_ok">Sent. Every tablet in the class will get it.</string>
+    <string name="send_class_failed">Couldn\'t send. Check the internet connection.</string>
+    <string name="teacher_wifi_mode">Share on the same Wi-Fi instead</string>
+    <string name="teacher_recent">Recently shared</string>
+    <string name="manage_class">Manage class</string>
+    <string name="sound_title">Sound on student tablets</string>
+    <string name="sound_class_on">Sound is on for the class.</string>
+    <string name="sound_class_off">Sound is off for the class.</string>
+    <string name="sound_mute_all">Mute all</string>
+    <string name="sound_allow_all">Sound on</string>
+    <string name="classes_title">Your classes</string>
+    <string name="classes_add">Add a class</string>
 
     <!-- Online class: manage -->
-    <string name="manage_codes">🔑 Codes</string>
-    <string name="manage_student_code">Class code for students</string>
-    <string name="manage_student_code_hint">Students type this once on their tablet: Set up my class → Student.</string>
+    <string name="manage_codes">Codes</string>
+    <string name="manage_student_code">Class code</string>
+    <string name="manage_student_code_hint">Students enter this once: Set up → Student.</string>
     <string name="manage_teacher_code">Teacher code</string>
-    <string name="manage_teacher_code_hint">Give this only to other teachers of this class. It is also needed to take a student tablet out of the class.</string>
-    <string name="manage_new_code">🔄 New code</string>
-    <string name="manage_students">🧒 Student tablets (%1$d)</string>
-    <string name="manage_no_students">No tablets yet. Share the class code with your students.</string>
-    <string name="manage_teachers">🧑‍🏫 Teachers (%1$d)</string>
+    <string name="manage_teacher_code_hint">Only for other teachers of this class. Also needed to take a student tablet out of the class.</string>
+    <string name="manage_new_code">New code</string>
+    <string name="manage_students">Tablets (%1$d)</string>
+    <string name="manage_no_students">No tablets yet. Give your students the class code.</string>
+    <string name="manage_teachers">Teachers (%1$d)</string>
     <string name="manage_you">%1$s (you)</string>
-    <string name="manage_online">online</string>
-    <string name="manage_offline">offline</string>
-    <string name="remove_button">Remove</string>
-    <string name="leave_button">Leave class</string>
-    <string name="yes_button">Yes</string>
-    <string name="ok_button">OK</string>
-    <string name="cancel">Cancel</string>
+    <string name="manage_online">Online</string>
+    <string name="manage_offline">Offline</string>
     <string name="confirm_remove_device">Remove %1$s\'s tablet from the class? It can join again with the class code.</string>
     <string name="confirm_remove_teacher">Remove %1$s as a teacher of this class?</string>
     <string name="confirm_leave_teacher">Leave this class on this device? The other teachers keep the class.</string>
@@ -130,8 +136,8 @@
     <!-- Notifications -->
     <string name="channel_class">Class connection</string>
     <string name="channel_messages">Links from the teacher</string>
-    <string name="notif_connected_title">🏫 Connected to my class</string>
+    <string name="notif_connected_title">Connected to your class</string>
     <string name="notif_sound_on">Sound is on</string>
-    <string name="notif_sound_off">🔇 Sound is off (teacher)</string>
+    <string name="notif_sound_off">Sound is off (set by the teacher)</string>
     <string name="notif_new_message">New from %1$s</string>
 </resources>

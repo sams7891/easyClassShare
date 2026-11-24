@@ -25,10 +25,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -38,8 +39,14 @@ import kotlinx.coroutines.withTimeout
 class ClassViewModel(application: Application) : AndroidViewModel(application) {
     val isConfigured: Boolean = OnlineConfig.isConfigured
 
+    /** The class shown right now. */
     val membership: StateFlow<Membership?> = LocalSetup.membership
-    val wasRemoved: StateFlow<Boolean> = LocalSetup.wasRemoved
+
+    /** All classes of this device (a teacher can have several). */
+    val memberships: StateFlow<List<Membership>> = LocalSetup.memberships
+
+    /** Name of a class a teacher just removed this device from (null = nothing to tell). */
+    val removedFrom: StateFlow<String?> = LocalSetup.removedFrom
 
     /** Follows [block] for the current class, or shows [initial] when there is none. */
     private fun <T> live(initial: T, teacherOnly: Boolean = false, block: (Membership) -> Flow<T>): StateFlow<T> =
@@ -51,7 +58,11 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), initial)
 
-    val className: StateFlow<String?> = live(null) { ClassRepository.className(it.classId) }
+    val className: StateFlow<String?> = live(null) { m ->
+        ClassRepository.className(m.classId).onEach { name ->
+            if (name != null) LocalSetup.updateClassName(m.classId, name)
+        }
+    }
     val messages: StateFlow<List<ShareMessage>> = live(emptyList()) { ClassRepository.messages(it.classId) }
     val mySoundAllowed: StateFlow<Boolean> = live(true) {
         if (it.role == Role.STUDENT) ClassRepository.soundAllowedForMe(it.classId) else flowOf(true)
@@ -83,18 +94,16 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     init {
-        // Notice when a teacher removes this device (or this teacher) from the class.
+        // Notice when a teacher removes this device (or this teacher) from any of its classes.
         viewModelScope.launch {
-            membership.flatMapLatest { m ->
-                if (m == null) {
-                    emptyFlow<Membership>()
-                } else {
+            memberships.flatMapLatest { list ->
+                list.map { m ->
                     flow {
                         ClassRepository.isStillMember(m).catch { }.collect { stillMember ->
                             if (!stillMember) emit(m)
                         }
                     }
-                }
+                }.merge()
             }.collect { removed -> LocalSetup.markRemoved(removed) }
         }
     }
@@ -107,15 +116,27 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
 
     // ---------------------------------------------------------------- setup
 
-    fun createClass(className: String, teacherName: String) = runAction {
+    /** The teacher's name from an earlier class, to fill in when adding another class. */
+    val knownTeacherName: String
+        get() = memberships.value.lastOrNull { it.role == Role.TEACHER }?.name.orEmpty()
+
+    fun createClass(className: String, teacherName: String, onDone: () -> Unit) = runAction {
         val m = ClassRepository.createClass(className.trim().take(MAX_NAME), teacherName.trim().take(MAX_NAME))
         LocalSetup.save(m)
+        onDone()
     }
 
-    fun join(code: String, name: String, role: Role) = runAction {
+    fun join(code: String, name: String, role: Role, onDone: () -> Unit) = runAction {
         val m = ClassRepository.join(code, name.trim().take(MAX_NAME), role)
         LocalSetup.save(m)
         if (m.role == Role.STUDENT) ClassService.start(getApplication())
+        onDone()
+    }
+
+    fun switchClass(classId: String) {
+        clearError()
+        draft = ""
+        LocalSetup.setActive(classId)
     }
 
     /** Teachers leave freely; students need a teacher code so kids can't just walk out of class. */
@@ -126,7 +147,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
             return@runAction
         }
         ClassRepository.leave(m)
-        LocalSetup.clear()
+        LocalSetup.remove(m)
     }
 
     // ---------------------------------------------------------------- teacher

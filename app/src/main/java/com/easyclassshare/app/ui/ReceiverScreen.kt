@@ -20,13 +20,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -42,25 +44,27 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.ClassShareViewModel
 import com.easyclassshare.app.R
 import com.easyclassshare.app.data.LinkUtils
 import com.easyclassshare.app.data.ShareMessage
+import com.easyclassshare.app.ui.components.AppTopBar
 import com.easyclassshare.app.ui.components.BigButton
-import com.easyclassshare.app.ui.components.KidTopBar
+import com.easyclassshare.app.ui.components.IconBadge
+import com.easyclassshare.app.ui.components.Notice
 import com.easyclassshare.app.ui.components.Pulsing
-import com.easyclassshare.app.ui.theme.Berry
-import com.easyclassshare.app.ui.theme.BerryLight
+import com.easyclassshare.app.ui.components.SoftButton
+import com.easyclassshare.app.ui.components.Tone
+import com.easyclassshare.app.ui.components.drawableIcon
 import com.easyclassshare.app.ui.theme.Ink
-import com.easyclassshare.app.ui.theme.Leaf
-import com.easyclassshare.app.ui.theme.Outline
-import com.easyclassshare.app.ui.theme.ReceiveBlue
-import com.easyclassshare.app.ui.theme.SendOrange
+import com.easyclassshare.app.ui.theme.InkSoft
+import com.easyclassshare.app.ui.theme.Line
+import com.easyclassshare.app.ui.theme.Pencil
+import com.easyclassshare.app.ui.theme.Sky
 import com.easyclassshare.app.ui.theme.SkyLight
-import com.easyclassshare.app.ui.theme.SunnyLight
 import java.util.Date
 
+/** Same-Wi-Fi mode: wait for links from a teacher on the same network. */
 @Composable
 fun ReceiverScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -85,9 +89,7 @@ fun ReceiverScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
         if (vm.received.isNotEmpty()) listState.animateScrollToItem(0)
     }
 
-    Scaffold(
-        topBar = { KidTopBar(stringResource(R.string.receive_title), ReceiveBlue, Color.White, onBack) },
-    ) { padding ->
+    Scaffold(topBar = { AppTopBar(stringResource(R.string.receive_title), onBack) }) { padding ->
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -128,33 +130,26 @@ internal fun openLink(context: Context, text: String, errorText: String) {
 
 @Composable
 private fun ListeningBanner(isListening: Boolean, hasError: Boolean, onRetry: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (hasError) BerryLight else SkyLight,
-            contentColor = if (hasError) Berry else Ink,
-        ),
+    if (hasError) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Notice(stringResource(R.string.listen_error), Tone.BAD, Icons.Filled.Warning)
+            SoftButton(stringResource(R.string.try_again), onRetry)
+        }
+        return
+    }
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (hasError) Text("😕", fontSize = 40.sp) else Pulsing { Text("👂", fontSize = 40.sp) }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                when {
-                    hasError -> {
-                        Text(stringResource(R.string.listen_error), style = MaterialTheme.typography.titleMedium)
-                        TextButton(onClick = onRetry) {
-                            Text(stringResource(R.string.try_again), style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                    isListening -> {
-                        Text(stringResource(R.string.listening_title), style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            stringResource(R.string.listening_subtitle),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
-                    else -> Text(stringResource(R.string.getting_ready), style = MaterialTheme.typography.titleLarge)
-                }
+        Pulsing { IconBadge(Icons.Filled.Notifications, Sky, SkyLight) }
+        Spacer(Modifier.width(14.dp))
+        Column {
+            Text(
+                stringResource(if (isListening) R.string.listening_title else R.string.getting_ready),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            if (isListening) {
+                Text(stringResource(R.string.listening_subtitle), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
             }
         }
     }
@@ -163,20 +158,22 @@ private fun ListeningBanner(isListening: Boolean, hasError: Boolean, onRetry: ()
 @Composable
 internal fun EmptyInbox() {
     Column(
-        Modifier.fillMaxWidth().padding(vertical = 32.dp),
+        Modifier.fillMaxWidth().padding(vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("📭", fontSize = 88.sp)
-        Text(stringResource(R.string.empty_title), style = MaterialTheme.typography.headlineSmall)
+        IconBadge(drawableIcon(R.drawable.ic_link), InkSoft, Line, size = 72)
+        Text(stringResource(R.string.empty_title), style = MaterialTheme.typography.titleLarge)
         Text(
             stringResource(R.string.empty_subtitle),
             style = MaterialTheme.typography.bodyLarge,
+            color = InkSoft,
             textAlign = TextAlign.Center,
         )
     }
 }
 
+/** One received link or message. The newest one is highlighted and has a "New" label. */
 @Composable
 internal fun ReceivedCard(
     message: ShareMessage,
@@ -187,32 +184,28 @@ internal fun ReceivedCard(
 ) {
     val context = LocalContext.current
     val time = remember(message.timestamp) { DateFormat.getTimeFormat(context).format(Date(message.timestamp)) }
-    val defaultSender = stringResource(R.string.default_sender)
+    val sender = message.senderName.ifBlank { stringResource(R.string.default_sender) }
 
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isNewest) SunnyLight else Color.White,
-            contentColor = Ink,
-        ),
-        border = if (isNewest) BorderStroke(3.dp, SendOrange) else BorderStroke(1.dp, Outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White, contentColor = Ink),
+        border = BorderStroke(if (isNewest) 2.dp else 1.dp, if (isNewest) Pencil else Line),
     ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (message.isLink) "🔗" else "💬", fontSize = 32.sp)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(message.senderName.ifBlank { defaultSender }, style = MaterialTheme.typography.titleMedium)
-                    Text(time, style = MaterialTheme.typography.bodyMedium, color = Ink.copy(alpha = 0.7f))
-                }
+                Text(
+                    "$sender · $time",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = InkSoft,
+                    modifier = Modifier.weight(1f),
+                )
                 if (isNewest) {
-                    Surface(shape = RoundedCornerShape(50), color = SendOrange, contentColor = Ink) {
+                    Surface(shape = RoundedCornerShape(50), color = Pencil, contentColor = Ink) {
                         Text(
                             stringResource(R.string.new_badge),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
                         )
                     }
                 }
@@ -224,9 +217,9 @@ internal fun ReceivedCard(
                 overflow = TextOverflow.Ellipsis,
             )
             if (message.isLink) {
-                BigButton(stringResource(R.string.open_link), onOpen, ReceiveBlue, Color.White)
+                BigButton(stringResource(R.string.open_link), onOpen, icon = drawableIcon(R.drawable.ic_link), containerColor = Sky)
             } else {
-                BigButton(stringResource(R.string.copy), onCopy, Leaf, Color.White)
+                SoftButton(stringResource(R.string.copy), onCopy, modifier = Modifier.fillMaxWidth())
             }
         }
     }

@@ -24,14 +24,16 @@ Install the same version on every tablet.
 
 ## 🏫 Online classes
 ### Setting up a class (once)
-1. **Teacher:** open the app → **MY CLASS** → **Teacher** → **New class**.
+1. **Teacher:** open the app → **My class** → **Teacher** → **New class**.
    Type your name and the class name. You get two codes (see *Manage class*):
    - a **class code** (6 letters) for the students,
    - a **teacher code** (8 letters) for other teachers of this class.
-2. **Each student tablet:** **MY CLASS** → **Student**, type the child's name
+2. **Each student tablet:** **My class** → **Student**, type the child's name
    and the class code. Done: the tablet stays in the class, also after a restart.
-3. **Other teachers:** **MY CLASS** → **Teacher** → **Join as teacher** with the
+3. **Other teachers:** **My class** → **Teacher** → **Join as a teacher** with the
    teacher code. All teachers of a class have the same rights.
+4. **More classes:** a teacher taps the class name at the top → **Add a class**,
+   and switches between classes the same way.
 
 ### In class
 - Type or paste a link and tap **🚀 Send to my class!** Every tablet in the class
@@ -56,7 +58,7 @@ A student tablet can only leave the class when a teacher types the teacher code
 ### One-time Firebase setup (for whoever builds the app)
 Online classes use a free [Firebase](https://firebase.google.com/) project.
 Without it the app still builds and the same-Wi-Fi mode works; the
-*MY CLASS* button is simply hidden.
+*My class* button is simply hidden.
 
 1. Go to the [Firebase console](https://console.firebase.google.com/) and
    **create a project** (Google Analytics is not needed).

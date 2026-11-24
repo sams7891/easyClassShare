@@ -85,7 +85,7 @@ object ClassRepository {
             "joinCodes/${codes.teacherCode}" to mapOf("classId" to classId, "role" to "teacher"),
         )
         root.updateChildren(updates).await()
-        return Membership(classId, Role.TEACHER, teacherName)
+        return Membership(classId, Role.TEACHER, teacherName, className)
     }
 
     /** Joins with a student or teacher code. [expectedRole] stops a student from joining with a teacher code by mistake. */
@@ -109,7 +109,10 @@ object ClassRepository {
         node.setValue(
             mapOf("name" to name, "code" to code, "joinedAt" to ServerValue.TIMESTAMP),
         ).await()
-        return Membership(classId, role, name)
+        val className = runCatching {
+            classRef(classId).child("info").child("name").get().await().value as? String
+        }.getOrNull().orEmpty()
+        return Membership(classId, role, name, className)
     }
 
     /** True if [rawCode] is the current teacher code of [classId]. Students need it to leave a class. */

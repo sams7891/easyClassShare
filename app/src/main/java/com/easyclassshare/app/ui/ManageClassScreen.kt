@@ -15,14 +15,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -43,12 +45,15 @@ import com.easyclassshare.app.R
 import com.easyclassshare.app.online.DeviceInfo
 import com.easyclassshare.app.online.Role
 import com.easyclassshare.app.online.TeacherInfo
-import com.easyclassshare.app.ui.components.KidTopBar
-import com.easyclassshare.app.ui.theme.Berry
-import com.easyclassshare.app.ui.theme.ClassPurple
+import com.easyclassshare.app.ui.components.AppTopBar
+import com.easyclassshare.app.ui.components.Panel
+import com.easyclassshare.app.ui.components.SoftButton
+import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.Brick
+import com.easyclassshare.app.ui.theme.Chalk
 import com.easyclassshare.app.ui.theme.Ink
-import com.easyclassshare.app.ui.theme.Leaf
-import com.easyclassshare.app.ui.theme.Outline
+import com.easyclassshare.app.ui.theme.InkSoft
+import com.easyclassshare.app.ui.theme.Line
 
 /** A pending "are you sure?" question. */
 private sealed interface Confirm {
@@ -61,6 +66,7 @@ private sealed interface Confirm {
 /** Teachers only: join codes, sound per tablet, removing tablets and co-teachers. */
 @Composable
 fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
+    val className by cvm.className.collectAsState()
     val codes by cvm.codes.collectAsState()
     val sound by cvm.sound.collectAsState()
     val devices by cvm.devices.collectAsState()
@@ -69,7 +75,7 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
     var confirm by remember { mutableStateOf<Confirm?>(null) }
 
     Scaffold(
-        topBar = { KidTopBar(stringResource(R.string.manage_class), ClassPurple, Color.White, onBack) },
+        topBar = { AppTopBar(stringResource(R.string.manage_class), onBack, subtitle = className) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -78,65 +84,75 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
         ) {
             item { ErrorText(cvm.error) }
 
-            // ---- Join codes
-            item { SectionTitle(stringResource(R.string.manage_codes)) }
+            // ---- Codes
             item {
-                CodeCard(
-                    title = stringResource(R.string.manage_student_code),
-                    hint = stringResource(R.string.manage_student_code_hint),
-                    code = codes?.studentCode,
-                    enabled = !cvm.busy,
-                    onRenew = { confirm = Confirm.RenewCode(Role.STUDENT) },
-                )
-            }
-            item {
-                CodeCard(
-                    title = stringResource(R.string.manage_teacher_code),
-                    hint = stringResource(R.string.manage_teacher_code_hint),
-                    code = codes?.teacherCode,
-                    enabled = !cvm.busy,
-                    onRenew = { confirm = Confirm.RenewCode(Role.TEACHER) },
-                )
+                Panel {
+                    Text(stringResource(R.string.manage_codes), style = MaterialTheme.typography.titleLarge)
+                    CodeBlock(
+                        title = stringResource(R.string.manage_student_code),
+                        hint = stringResource(R.string.manage_student_code_hint),
+                        code = codes?.studentCode,
+                        enabled = !cvm.busy,
+                        onRenew = { confirm = Confirm.RenewCode(Role.STUDENT) },
+                    )
+                    HorizontalDivider(color = Line)
+                    CodeBlock(
+                        title = stringResource(R.string.manage_teacher_code),
+                        hint = stringResource(R.string.manage_teacher_code_hint),
+                        code = codes?.teacherCode,
+                        enabled = !cvm.busy,
+                        onRenew = { confirm = Confirm.RenewCode(Role.TEACHER) },
+                    )
+                }
             }
 
-            // ---- Sound + student tablets
-            item { SectionTitle(stringResource(R.string.manage_students, devices.size)) }
+            // ---- Sound
             item {
-                SoundSwitchRow(
+                SoundPanel(
                     allowed = sound.classWideAllowed,
                     enabled = !cvm.busy,
                     onMuteAll = { cvm.setClassSound(false) },
                     onAllowAll = { cvm.setClassSound(true) },
                 )
             }
-            if (devices.isEmpty()) {
-                item { InfoCard("📭", stringResource(R.string.manage_no_students)) }
-            }
-            items(devices, key = { "d-" + it.uid }) { device ->
-                DeviceRow(
-                    device = device,
-                    soundAllowed = sound.isAllowed(device.uid),
-                    enabled = !cvm.busy,
-                    onSoundChange = { cvm.setDeviceSound(device.uid, it) },
-                    onRemove = { confirm = Confirm.RemoveDevice(device) },
-                )
+
+            // ---- Student tablets
+            item {
+                Panel {
+                    Text(stringResource(R.string.manage_students, devices.size), style = MaterialTheme.typography.titleLarge)
+                    if (devices.isEmpty()) {
+                        Text(stringResource(R.string.manage_no_students), style = MaterialTheme.typography.bodyLarge, color = InkSoft)
+                    }
+                    devices.forEachIndexed { index, device ->
+                        if (index > 0) HorizontalDivider(color = Line)
+                        DeviceRow(
+                            device = device,
+                            soundAllowed = sound.isAllowed(device.uid),
+                            enabled = !cvm.busy,
+                            onSoundChange = { cvm.setDeviceSound(device.uid, it) },
+                            onRemove = { confirm = Confirm.RemoveDevice(device) },
+                        )
+                    }
+                }
             }
 
             // ---- Teachers
-            item { SectionTitle(stringResource(R.string.manage_teachers, teachers.size)) }
-            items(teachers, key = { "t-" + it.uid }) { teacher ->
-                val isMe = teacher.uid == myUid
-                PersonRow(
-                    emoji = "🧑‍🏫",
-                    name = if (isMe) stringResource(R.string.manage_you, teacher.name) else teacher.name,
-                ) {
-                    if (isMe) {
-                        TextButton(onClick = { confirm = Confirm.LeaveClass }, enabled = !cvm.busy) {
-                            Text(stringResource(R.string.leave_button), color = Berry)
-                        }
-                    } else {
-                        TextButton(onClick = { confirm = Confirm.RemoveTeacher(teacher) }, enabled = !cvm.busy) {
-                            Text(stringResource(R.string.remove_button), color = Berry)
+            item {
+                Panel {
+                    Text(stringResource(R.string.manage_teachers, teachers.size), style = MaterialTheme.typography.titleLarge)
+                    teachers.forEachIndexed { index, teacher ->
+                        if (index > 0) HorizontalDivider(color = Line)
+                        val isMe = teacher.uid == myUid
+                        PersonRow(
+                            icon = { Icon(Icons.Filled.Person, contentDescription = null, tint = InkSoft) },
+                            name = if (isMe) stringResource(R.string.manage_you, teacher.name) else teacher.name,
+                        ) {
+                            TextButton(
+                                onClick = { confirm = if (isMe) Confirm.LeaveClass else Confirm.RemoveTeacher(teacher) },
+                                enabled = !cvm.busy,
+                            ) {
+                                Text(stringResource(if (isMe) R.string.leave_button else R.string.remove_button), color = Brick)
+                            }
                         }
                     }
                 }
@@ -177,29 +193,19 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 8.dp))
-}
-
-@Composable
-private fun CodeCard(title: String, hint: String, code: String?, enabled: Boolean, onRenew: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White, contentColor = Ink),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                code ?: "…",
-                fontSize = 40.sp,
-                fontFamily = FontFamily.Monospace,
-                color = ClassPurple,
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            Text(hint, style = MaterialTheme.typography.bodyMedium, color = Ink.copy(alpha = 0.7f))
-            OutlinedButton(onClick = onRenew, enabled = enabled && code != null) {
-                Text(stringResource(R.string.manage_new_code))
-            }
+private fun CodeBlock(title: String, hint: String, code: String?, enabled: Boolean, onRenew: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            code ?: "…",
+            fontSize = 36.sp,
+            letterSpacing = 4.sp,
+            fontFamily = FontFamily.Monospace,
+            color = Chalk,
+        )
+        Text(hint, style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+        Row {
+            SoftButton(stringResource(R.string.manage_new_code), onRenew, icon = Icons.Filled.Refresh, enabled = enabled && code != null)
         }
     }
 }
@@ -212,52 +218,53 @@ private fun DeviceRow(
     onSoundChange: (Boolean) -> Unit,
     onRemove: () -> Unit,
 ) {
-    PersonRow(emoji = "🧒", name = device.name, online = device.online) {
-        Text(if (soundAllowed) "🔊" else "🔇", fontSize = 24.sp)
-        Spacer(Modifier.width(4.dp))
-        Switch(checked = soundAllowed, onCheckedChange = onSoundChange, enabled = enabled)
+    PersonRow(
+        icon = {
+            Box {
+                Icon(Icons.Filled.Face, contentDescription = null, tint = InkSoft)
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(10.dp)
+                        .background(if (device.online) Chalk else Line, CircleShape),
+                )
+            }
+        },
+        name = device.name,
+        detail = stringResource(if (device.online) R.string.manage_online else R.string.manage_offline),
+    ) {
+        Icon(
+            drawableIcon(if (soundAllowed) R.drawable.ic_volume_on else R.drawable.ic_volume_off),
+            contentDescription = null,
+            tint = if (soundAllowed) Ink else Brick,
+        )
+        Spacer(Modifier.width(6.dp))
+        Switch(
+            checked = soundAllowed,
+            onCheckedChange = onSoundChange,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(checkedTrackColor = Chalk),
+        )
         TextButton(onClick = onRemove, enabled = enabled) {
-            Text(stringResource(R.string.remove_button), color = Berry)
+            Text(stringResource(R.string.remove_button), color = Brick)
         }
     }
 }
 
 @Composable
 private fun PersonRow(
-    emoji: String,
+    icon: @Composable () -> Unit,
     name: String,
-    online: Boolean? = null,
+    detail: String? = null,
     actions: @Composable () -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White, contentColor = Ink),
-    ) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(emoji, fontSize = 28.sp)
-            Spacer(Modifier.width(12.dp))
-            if (online != null) {
-                Box(
-                    Modifier
-                        .size(12.dp)
-                        .background(if (online) Leaf else Outline, CircleShape),
-                )
-                Spacer(Modifier.width(8.dp))
-            }
-            Column(Modifier.weight(1f)) {
-                Text(name, style = MaterialTheme.typography.titleMedium)
-                if (online != null) {
-                    Text(
-                        stringResource(if (online) R.string.manage_online else R.string.manage_offline),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Ink.copy(alpha = 0.7f),
-                    )
-                }
-            }
-            actions()
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        icon()
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(name, style = MaterialTheme.typography.titleMedium)
+            if (detail != null) Text(detail, style = MaterialTheme.typography.bodyMedium, color = InkSoft)
         }
+        actions()
     }
 }
