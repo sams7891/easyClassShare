@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "882774899581",
+    "firebase_url": "https://easyclassshare-79e04-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "easyclassshare-79e04",
+    "storage_bucket": "easyclassshare-79e04.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882774899581:android:0483abc9f17afa0db16a14",
+        "android_client_info": {
+          "package_name": "com.easyclassshare.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMqFHgxkr1BmQnmvdfQnVIOm7HqLITR7Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
