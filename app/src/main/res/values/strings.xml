@@ -8,7 +8,10 @@
     <string name="role_send_subtitle">Share a link with everyone</string>
     <string name="role_receive_title">RECEIVE</string>
     <string name="role_receive_subtitle">Get links from the teacher</string>
-    <string name="same_wifi_tip">💡 All tablets must be on the same Wi-Fi.</string>
+    <string name="same_wifi_tip">💡 Same-Wi-Fi sharing needs all tablets on the same Wi-Fi.</string>
+    <string name="role_setup_title">MY CLASS</string>
+    <string name="role_setup_subtitle">One-time setup. Works on any network!</string>
+    <string name="or_same_wifi">…or share on the same Wi-Fi:</string>
 
 
     <!-- Common -->
@@ -47,4 +50,88 @@
     <string name="copy">📋 Copy</string>
     <string name="copied">Copied!</string>
     <string name="could_not_open">Could not open this link</string>
+
+    <!-- Online class: setup -->
+    <string name="setup_title">Set up my class</string>
+    <string name="setup_not_configured">Online classes are not switched on in this version of the app. Ask the person who builds it to follow the Firebase setup in the README.</string>
+    <string name="setup_who">Who uses this tablet?</string>
+    <string name="setup_student_title">STUDENT</string>
+    <string name="setup_student_subtitle">Join my class with a code</string>
+    <string name="setup_teacher_title">TEACHER</string>
+    <string name="setup_teacher_subtitle">Create a class or join one</string>
+    <string name="setup_once_tip">You only do this once. The tablet remembers its class, even after a restart.</string>
+    <string name="setup_create_title">NEW CLASS</string>
+    <string name="setup_create_subtitle">Create a class and get its codes</string>
+    <string name="setup_cojoin_title">JOIN AS TEACHER</string>
+    <string name="setup_cojoin_subtitle">Another teacher gave you a teacher code</string>
+    <string name="setup_student_name">Your name</string>
+    <string name="setup_class_code">Class code</string>
+    <string name="setup_teacher_code">Teacher code</string>
+    <string name="setup_class_name">Class name (e.g. 3B)</string>
+    <string name="setup_join_button">🎒 Join my class</string>
+    <string name="setup_cojoin_button">🤝 Join as teacher</string>
+    <string name="setup_create_button">✨ Create class</string>
+    <string name="setup_working">⏳ One moment…</string>
+
+    <!-- Online class: errors -->
+    <string name="online_error_code">😕 That code doesn\'t work. Check it and try again.</string>
+    <string name="online_error_student_code">That is a student code. Ask for the teacher code.</string>
+    <string name="online_error_teacher_code">That is a teacher code. Ask your teacher for the class code.</string>
+    <string name="online_error_leave_code">😕 Wrong teacher code.</string>
+    <string name="online_error_connection">😕 No connection. Check the internet and try again.</string>
+    <string name="online_error_generic">😕 Something went wrong. Check the internet and try again.</string>
+
+    <!-- Online class: student -->
+    <string name="class_default_name">My class</string>
+    <string name="student_sound_on">Sound is on.</string>
+    <string name="student_sound_off">Sound is off. Your teacher turned it off.</string>
+    <string name="student_leave">Leave class (teacher only)</string>
+    <string name="student_leave_title">Leave the class?</string>
+    <string name="student_leave_text">A teacher has to type the teacher code to take this tablet out of the class.</string>
+    <string name="removed_notice">This tablet was removed from the class. You can set it up again at any time.</string>
+
+    <!-- Online class: teacher -->
+    <string name="teacher_devices_summary">🟢 %1$d of %2$d tablets online</string>
+    <string name="send_to_class">🚀 Send to my class!</string>
+    <string name="send_class_ok">Sent! Every tablet in the class gets it, on any network.</string>
+    <string name="send_class_failed">Could not send. Check the internet and try again.</string>
+    <string name="teacher_wifi_mode">📶 Send on same Wi-Fi (no internet)</string>
+    <string name="manage_class">👥 Manage class</string>
+    <string name="sound_class_on">🔊 Sound is on for the class</string>
+    <string name="sound_class_off">🔇 Sound is off for the class</string>
+    <string name="sound_mute_all">🔇 Mute all</string>
+    <string name="sound_allow_all">🔊 Sound on</string>
+
+    <!-- Online class: manage -->
+    <string name="manage_codes">🔑 Codes</string>
+    <string name="manage_student_code">Class code for students</string>
+    <string name="manage_student_code_hint">Students type this once on their tablet: Set up my class → Student.</string>
+    <string name="manage_teacher_code">Teacher code</string>
+    <string name="manage_teacher_code_hint">Give this only to other teachers of this class. It is also needed to take a student tablet out of the class.</string>
+    <string name="manage_new_code">🔄 New code</string>
+    <string name="manage_students">🧒 Student tablets (%1$d)</string>
+    <string name="manage_no_students">No tablets yet. Share the class code with your students.</string>
+    <string name="manage_teachers">🧑‍🏫 Teachers (%1$d)</string>
+    <string name="manage_you">%1$s (you)</string>
+    <string name="manage_online">online</string>
+    <string name="manage_offline">offline</string>
+    <string name="remove_button">Remove</string>
+    <string name="leave_button">Leave class</string>
+    <string name="yes_button">Yes</string>
+    <string name="ok_button">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm_remove_device">Remove %1$s\'s tablet from the class? It can join again with the class code.</string>
+    <string name="confirm_remove_teacher">Remove %1$s as a teacher of this class?</string>
+    <string name="confirm_leave_teacher">Leave this class on this device? The other teachers keep the class.</string>
+    <string name="confirm_leave_last_teacher">You are the only teacher. If you leave, nobody can manage this class any more. Leave anyway?</string>
+    <string name="confirm_renew_student">Make a new class code? The old one stops working. Tablets already in the class stay in.</string>
+    <string name="confirm_renew_teacher">Make a new teacher code? The old one stops working. Teachers already in the class stay in.</string>
+
+    <!-- Notifications -->
+    <string name="channel_class">Class connection</string>
+    <string name="channel_messages">Links from the teacher</string>
+    <string name="notif_connected_title">🏫 Connected to my class</string>
+    <string name="notif_sound_on">Sound is on</string>
+    <string name="notif_sound_off">🔇 Sound is off (teacher)</string>
+    <string name="notif_new_message">New from %1$s</string>
 </resources>

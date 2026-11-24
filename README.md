@@ -1,7 +1,15 @@
 # Easy Class Share 🎒
 
 A small, kid-friendly Android app for sharing links (or short messages) with
-every tablet in a classroom. **One app, two roles:**
+every tablet in a classroom. It works in two ways:
+
+- **🏫 My class (online):** a one-time setup puts each tablet into a class.
+  Works on **any network**, supports **several teachers per class**, and lets
+  teachers **manage the class** and **switch sound off** for everyone or for
+  single tablets.
+- **📶 Same Wi-Fi:** no setup and no internet, for quick sharing in one room.
+
+In same-Wi-Fi mode there are two roles:
 
 | Role | Who | What it does |
 |------|-----|--------------|
@@ -14,7 +22,66 @@ Get the latest **`.apk`** from the
 open it on the tablet and tap **Install** (allow "install unknown apps" if asked).
 Install the same version on every tablet.
 
-## How to use it in class
+## 🏫 Online classes
+### Setting up a class (once)
+1. **Teacher:** open the app → **MY CLASS** → **Teacher** → **New class**.
+   Type your name and the class name. You get two codes (see *Manage class*):
+   - a **class code** (6 letters) for the students,
+   - a **teacher code** (8 letters) for other teachers of this class.
+2. **Each student tablet:** **MY CLASS** → **Student**, type the child's name
+   and the class code. Done: the tablet stays in the class, also after a restart.
+3. **Other teachers:** **MY CLASS** → **Teacher** → **Join as teacher** with the
+   teacher code. All teachers of a class have the same rights.
+
+### In class
+- Type or paste a link and tap **🚀 Send to my class!** Every tablet in the class
+  gets it, on any network, even when the app is in the background (as a notification).
+- **🔇 Mute all / 🔊 Sound on** switches the sound of all student tablets.
+- **👥 Manage class** shows the codes, all tablets (online or not) with a
+  **sound switch for each tablet**, and the teachers. From there you can remove
+  tablets or teachers, and make new codes if a code got out.
+
+### How the sound lock works
+While sound is off for a tablet, the app sets the tablet's volume (media,
+notifications, system and ring) to zero and puts it back to zero if a child
+turns it up. Only a teacher can switch it on again; then the old volume comes
+back. This works while the app is installed and running (a small "Connected to
+my class" notification shows that). A child could still force-stop or
+uninstall the app; to prevent that, the tablets need a device-management
+(MDM / kiosk) setup, which is outside this app.
+
+A student tablet can only leave the class when a teacher types the teacher code
+(or a teacher removes it in *Manage class*).
+
+### One-time Firebase setup (for whoever builds the app)
+Online classes use a free [Firebase](https://firebase.google.com/) project.
+Without it the app still builds and the same-Wi-Fi mode works; the
+*MY CLASS* button is simply hidden.
+
+1. Go to the [Firebase console](https://console.firebase.google.com/) and
+   **create a project** (Google Analytics is not needed).
+2. **Build → Authentication → Get started → Sign-in method → Anonymous → Enable.**
+3. **Build → Realtime Database → Create database**, pick a location (for
+   schools in the EU: **Belgium, europe-west1**), start in **locked mode**.
+4. In the database's **Rules** tab, replace everything with the content of
+   [`database.rules.json`](database.rules.json) and click **Publish**.
+5. **Project settings (⚙️) → Your apps → Android**: package name
+   `com.easyclassshare.app`, register the app and **download
+   `google-services.json`** (download it *after* step 3, so it contains the
+   database address).
+6. Put `google-services.json` into the `app/` folder and commit it. The next
+   build (also on GitHub Actions) has online classes switched on.
+
+`google-services.json` is not secret: Firebase says it is fine to ship it in
+apps. What protects the data are the database rules from step 4: only teachers
+of a class can send, see the codes, change sound or remove tablets; students
+only see their own class.
+
+Data stored online: class name, teacher and student first names, the shared
+links/messages (newest 50 shown), and which tablets are online. No e-mail
+addresses or accounts.
+
+## 📶 Same-Wi-Fi mode
 1. Connect all tablets to the **same Wi-Fi** (or the teacher's phone hotspot).
 2. Kids tap **RECEIVE**. The teacher taps **SEND**, pastes a link and taps
    **🚀 Send**. A chime plays and the link pops up on every tablet.
@@ -22,7 +89,7 @@ Install the same version on every tablet.
 Tip: in Chrome, the teacher can tap *Share → Easy Class Share* to open the
 Send screen with the link already filled in.
 
-## How it works
+## How same-Wi-Fi mode works
 - No server, no accounts, no internet needed: messages are **UDP broadcasts**
   on the local network (port `47474`), JSON-encoded (`ShareMessage`, protocol v2).
 - Each message is sent 5× to survive dropped packets; receivers ignore
@@ -48,11 +115,16 @@ once (or let Android Studio generate it), then `./gradlew assembleDebug test`.
 ## Project layout
 ```
 app/src/main/java/com/easyclassshare/app/
-├── MainActivity.kt          # single activity, screen switching, share intent
-├── ClassShareViewModel.kt   # app state for both roles
-├── data/                    # ShareMessage, LinkUtils
-├── net/ClassNetwork.kt      # UDP broadcast send/receive
-└── ui/                      # Home, Sender, Receiver screens + theme/components
+├── MainActivity.kt              # single activity, screen switching, share intent
+├── EasyClassShareApplication.kt # starts the online-class pieces
+├── ClassShareViewModel.kt       # same-Wi-Fi mode state
+├── ClassViewModel.kt            # online class state (setup, send, manage)
+├── data/                        # ShareMessage, LinkUtils
+├── net/ClassNetwork.kt          # same-Wi-Fi: UDP broadcast send/receive
+├── online/                      # Firebase: ClassRepository, codes, saved setup
+├── service/                     # student background service, sound lock, boot start
+└── ui/                          # screens + theme/components
+database.rules.json              # Firebase security rules (paste into the console)
 ```
 
 ## Automatic builds (GitHub Actions)

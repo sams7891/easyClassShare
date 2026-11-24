@@ -117,7 +117,7 @@ fun ReceiverScreen(vm: ClassShareViewModel, onBack: () -> Unit) {
     }
 }
 
-private fun openLink(context: Context, text: String, errorText: String) {
+internal fun openLink(context: Context, text: String, errorText: String) {
     val url = LinkUtils.normalize(text) ?: return
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
@@ -161,7 +161,7 @@ private fun ListeningBanner(isListening: Boolean, hasError: Boolean, onRetry: ()
 }
 
 @Composable
-private fun EmptyInbox() {
+internal fun EmptyInbox() {
     Column(
         Modifier.fillMaxWidth().padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -178,7 +178,7 @@ private fun EmptyInbox() {
 }
 
 @Composable
-private fun ReceivedCard(
+internal fun ReceivedCard(
     message: ShareMessage,
     isNewest: Boolean,
     onOpen: () -> Unit,

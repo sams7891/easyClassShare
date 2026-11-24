@@ -4,6 +4,22 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-24
+### Added
+- **Online classes** (Firebase): one-time setup per tablet with a class code;
+  sharing works across different networks and in the background.
+- Several teachers per class (teacher code), with equal rights.
+- **Manage class** for teachers: class and teacher codes (renewable), list of
+  student tablets with online status, remove tablets or teachers.
+- **Sound control**: teachers can switch sound off for the whole class or for
+  single tablets. Muted tablets are held at volume zero until a teacher allows
+  sound again.
+- Student tablets reconnect automatically after a restart or app update, and
+  can only leave a class with the teacher code.
+
+### Changed
+- The same-Wi-Fi mode is still there for quick sharing without internet.
+
 ## [1.2.1] - 2026-11-23
 ### Fixed
 - Release build: tolerate whitespace in the keystore secret and report

@@ -20,6 +20,8 @@ val Leaf = Color(0xFF2E8B45)
 val Berry = Color(0xFFD62839)
 val BerryLight = Color(0xFFFFE0E3)
 val Outline = Color(0xFFE3D5B8)
+val ClassPurple = Color(0xFF6C4AB6)
+val PurpleLight = Color(0xFFECE4FF)
 
 private val KidColors = lightColorScheme(
     primary = ReceiveBlue,

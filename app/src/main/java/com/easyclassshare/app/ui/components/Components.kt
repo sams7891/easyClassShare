@@ -62,13 +62,13 @@ fun BigButton(
     }
 }
 
-/** Coloured top bar with a big round back button. */
+/** Coloured top bar with a big round back button (none when [onBack] is null). */
 @Composable
 fun KidTopBar(
     title: String,
     color: Color,
     contentColor: Color,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
 ) {
     Surface(color = color, contentColor = contentColor, shadowElevation = 4.dp) {
         Row(
@@ -78,18 +78,22 @@ fun KidTopBar(
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val backLabel = stringResource(R.string.back)
-            Surface(
-                onClick = onBack,
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier
-                    .size(52.dp)
-                    .semantics { contentDescription = backLabel },
-            ) {
-                Box(contentAlignment = Alignment.Center) { Text("⬅️", fontSize = 24.sp) }
+            if (onBack != null) {
+                val backLabel = stringResource(R.string.back)
+                Surface(
+                    onClick = onBack,
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier
+                        .size(52.dp)
+                        .semantics { contentDescription = backLabel },
+                ) {
+                    Box(contentAlignment = Alignment.Center) { Text("⬅️", fontSize = 24.sp) }
+                }
+                Spacer(Modifier.width(12.dp))
+            } else {
+                Spacer(Modifier.width(8.dp))
             }
-            Spacer(Modifier.width(12.dp))
             Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
         }
     }

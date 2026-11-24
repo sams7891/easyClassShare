@@ -28,12 +28,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.R
+import com.easyclassshare.app.ui.theme.ClassPurple
 import com.easyclassshare.app.ui.theme.Ink
 import com.easyclassshare.app.ui.theme.ReceiveBlue
 import com.easyclassshare.app.ui.theme.SendOrange
 
 @Composable
 fun HomeScreen(
+    showClassSetup: Boolean,
+    onSetupClick: () -> Unit,
     onSendClick: () -> Unit,
     onReceiveClick: () -> Unit,
 ) {
@@ -59,11 +62,20 @@ fun HomeScreen(
                     textAlign = TextAlign.Center,
                 )
 
-                Text(
-                    stringResource(R.string.step_pick_role),
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
-                )
+                if (showClassSetup) {
+                    RoleCard("🏫", R.string.role_setup_title, R.string.role_setup_subtitle, ClassPurple, Color.White, onSetupClick)
+                    Text(
+                        stringResource(R.string.or_same_wifi),
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    Text(
+                        stringResource(R.string.step_pick_role),
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                    )
+                }
                 RoleCard("🚀", R.string.role_send_title, R.string.role_send_subtitle, SendOrange, Ink, onSendClick)
                 RoleCard("📬", R.string.role_receive_title, R.string.role_receive_subtitle, ReceiveBlue, Color.White, onReceiveClick)
 
@@ -78,7 +90,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun RoleCard(
+internal fun RoleCard(
     emoji: String,
     @StringRes title: Int,
     @StringRes subtitle: Int,

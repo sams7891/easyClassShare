@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
@@ -53,7 +53,21 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: gradle --no-daemon test assembleRelease
+        run: |
+          echo "::add-matcher::.github/kotlin-problem-matcher.json"
+          set -o pipefail
+          gradle --no-daemon test assembleRelease 2>&1 | tee build.log
+
+      - name: Show why the build failed
+        if: failure()
+        run: |
+          # Turn Gradle's "What went wrong" section into annotations, readable on the run page.
+          grep -A 12 "What went wrong" build.log | head -40 | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error::$line"
+          done
+          grep -E "FAILED|Test.*>.*FAILED" build.log | head -10 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
 
       - name: Name the APK
         run: |
