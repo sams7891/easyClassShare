@@ -17,7 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** HOME/SEND/RECEIVE: same-Wi-Fi mode. SETUP/CLASS/MANAGE: online classes. */
-enum class Screen { HOME, SEND, RECEIVE, SETUP, CLASS, MANAGE }
+enum class Screen { HOME, SEND, RECEIVE, SETUP, CLASS, MANAGE, SCHOOL }
 
 /** [id] makes every result unique so the UI can react to the same outcome twice. */
 data class SendResult(val success: Boolean, val id: Long = System.nanoTime())

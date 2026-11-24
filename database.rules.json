@@ -5,40 +5,40 @@
     "joinCodes": {
       "$code": {
         ".read": "auth != null",
-        ".write": "auth != null && ((data.exists() && !newData.exists() && root.child('classes').child(data.child('classId').val()).child('teachers').child(auth.uid).exists()) || (!data.exists() && newData.exists() && (root.child('classes').child(newData.child('classId').val()).child('teachers').child(auth.uid).exists() || (!root.child('classes').child(newData.child('classId').val()).exists() && newData.parent().parent().child('classes').child(newData.child('classId').val()).child('info').child('createdBy').val() === auth.uid))))",
-        ".validate": "newData.hasChildren(['classId', 'role']) && newData.child('classId').isString() && (newData.child('role').val() === 'student' || newData.child('role').val() === 'teacher') && $code.matches(/^[A-Z0-9]{6,10}$/)"
+        ".write": "auth != null && (data.exists() && !newData.exists() && (data.child('classId').exists() && (root.child('classes').child(data.child('classId').val()).child('teachers').child(auth.uid).exists() || (root.child('classes').child(data.child('classId').val()).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child(data.child('classId').val()).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || data.child('schoolId').exists() && root.child('schools').child(data.child('schoolId').val()).child('admins').child(auth.uid).exists()) || !data.exists() && newData.exists() && (newData.child('classId').exists() && ((root.child('classes').child(newData.child('classId').val()).child('teachers').child(auth.uid).exists() || (root.child('classes').child(newData.child('classId').val()).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child(newData.child('classId').val()).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || !root.child('classes').child(newData.child('classId').val()).exists() && newData.parent().parent().child('classes').child(newData.child('classId').val()).child('info').child('createdBy').val() === auth.uid) || newData.child('schoolId').exists() && (root.child('schools').child(newData.child('schoolId').val()).child('admins').child(auth.uid).exists() || !root.child('schools').child(newData.child('schoolId').val()).exists() && newData.parent().parent().child('schools').child(newData.child('schoolId').val()).child('info').child('createdBy').val() === auth.uid)))",
+        ".validate": "newData.hasChild('role') && (newData.child('classId').isString() && (newData.child('role').val() === 'student' || newData.child('role').val() === 'teacher') || newData.child('schoolId').isString() && (newData.child('role').val() === 'admin' || newData.child('role').val() === 'school')) && $code.matches(/^[A-Z0-9]{6,10}$/)"
       }
     },
     "classSecrets": {
       "$cid": {
-        ".read": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
-        ".write": "auth != null && newData.exists() && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (!data.exists() && !root.child('classes').child($cid).exists() && newData.parent().parent().child('classes').child($cid).child('info').child('createdBy').val() === auth.uid))",
+        ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
+        ".write": "auth != null && newData.exists() && ((root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || !data.exists() && !root.child('classes').child($cid).exists() && newData.parent().parent().child('classes').child($cid).child('info').child('createdBy').val() === auth.uid)",
         ".validate": "newData.hasChildren(['studentCode', 'teacherCode']) && newData.child('studentCode').isString() && newData.child('teacherCode').isString()"
       }
     },
     "classes": {
       "$cid": {
         "info": {
-          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
-          ".write": "auth != null && newData.exists() && ((!data.exists() && newData.child('createdBy').val() === auth.uid) || root.child('classes').child($cid).child('teachers').child(auth.uid).exists())",
-          ".validate": "newData.hasChildren(['name', 'createdBy']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40"
+          ".read": "auth != null && ((root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
+          ".write": "auth != null && newData.exists() && (!data.exists() && newData.child('createdBy').val() === auth.uid || (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())))",
+          ".validate": "newData.hasChildren(['name', 'createdBy']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && (data.exists() && newData.child('school').val() === data.child('school').val() || !data.exists() && (!newData.child('school').exists() || newData.child('school').isString() && newData.parent().parent().parent().child('schools').child(newData.child('school').val()).child('classes').child($cid).exists()))"
         },
         "teachers": {
-          ".read": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && ((auth.uid === $uid && !data.exists() && newData.exists() && (newData.child('code').val() === root.child('classSecrets').child($cid).child('teacherCode').val() || (!root.child('classes').child($cid).child('info').exists() && newData.parent().parent().child('info').child('createdBy').val() === auth.uid))) || (!newData.exists() && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()))",
+            ".write": "auth != null && (auth.uid === $uid && !data.exists() && newData.exists() && (newData.child('code').val() === root.child('classSecrets').child($cid).child('teacherCode').val() || !root.child('classes').child($cid).child('info').exists() && newData.parent().parent().child('info').child('createdBy').val() === auth.uid) || !newData.exists() && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())))",
             ".validate": "newData.hasChildren(['name', 'code', 'joinedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40"
           }
         },
         "devices": {
-          ".read": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && ((auth.uid === $uid && !data.exists() && newData.exists() && newData.child('code').val() === root.child('classSecrets').child($cid).child('studentCode').val()) || (!newData.exists() && (auth.uid === $uid || root.child('classes').child($cid).child('teachers').child(auth.uid).exists())))",
+            ".write": "auth != null && (auth.uid === $uid && !data.exists() && newData.exists() && newData.child('code').val() === root.child('classSecrets').child($cid).child('studentCode').val() || !newData.exists() && (auth.uid === $uid || (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))))",
             ".validate": "newData.hasChildren(['name', 'code', 'joinedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40",
             "name": {
-              ".write": "auth != null && data.parent().exists() && newData.exists() && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+              ".write": "auth != null && data.parent().exists() && newData.exists() && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
             },
             "code": {
@@ -73,11 +73,15 @@
           }
         },
         "sound": {
-          ".read": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
-          ".write": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
+          ".write": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
           "all": {
-            ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
+            ".read": "auth != null && ((root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
             ".validate": "newData.isBoolean()"
+          },
+          "until": {
+            ".read": "auth != null && ((root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
+            ".validate": "newData.isNumber()"
           },
           "devices": {
             "$uid": {
@@ -85,36 +89,32 @@
               ".validate": "newData.isBoolean()"
             }
           },
-          "until": {
-            ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
-            ".validate": "newData.isNumber()"
-          },
           "$other": {
             ".validate": false
           }
         },
         "messages": {
-          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
+          ".read": "auth != null && ((root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
           "$mid": {
-            ".write": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists() && (!data.exists() || !newData.exists())",
+            ".write": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) && (!data.exists() || !newData.exists())",
             ".validate": "newData.hasChildren(['from', 'content', 'ts', 'by']) && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 2000 && newData.child('from').isString() && newData.child('from').val().length <= 40 && newData.child('ts').isNumber() && newData.child('by').val() === auth.uid"
           }
         },
         "inbox": {
-          ".read": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
           "$uid": {
             ".read": "auth != null && auth.uid === $uid && root.child('classes').child($cid).child('devices').child($uid).exists()",
-            ".write": "auth != null && !newData.exists() && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+            ".write": "auth != null && !newData.exists() && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
             "$mid": {
-              ".write": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists() && (!data.exists() || !newData.exists())",
+              ".write": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) && (!data.exists() || !newData.exists())",
               ".validate": "newData.hasChildren(['from', 'content', 'ts', 'by']) && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 2000 && newData.child('from').isString() && newData.child('from').val().length <= 40 && newData.child('ts').isNumber() && newData.child('by').val() === auth.uid && root.child('classes').child($cid).child('devices').child($uid).exists()"
             }
           }
         },
         "opened": {
-          ".read": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
           "$mid": {
-            ".write": "auth != null && !newData.exists() && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+            ".write": "auth != null && !newData.exists() && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
             "$uid": {
               ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('classes').child($cid).child('devices').child($uid).exists() && (root.child('classes').child($cid).child('messages').child($mid).exists() || root.child('classes').child($cid).child('inbox').child($uid).child($mid).exists())",
               ".validate": "newData.isNumber()"
@@ -122,9 +122,40 @@
           }
         },
         "attention": {
-          ".read": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
-          ".write": "auth != null && root.child('classes').child($cid).child('teachers').child(auth.uid).exists()",
+          ".read": "auth != null && ((root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists())) || root.child('classes').child($cid).child('devices').child(auth.uid).exists())",
+          ".write": "auth != null && (root.child('classes').child($cid).child('teachers').child(auth.uid).exists() || (root.child('classes').child($cid).child('info').child('school').exists() && root.child('schools').child(root.child('classes').child($cid).child('info').child('school').val()).child('admins').child(auth.uid).exists()))",
           ".validate": "newData.hasChildren(['text', 'from', 'ts']) && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 100 && newData.child('from').isString() && newData.child('from').val().length <= 40 && newData.child('ts').isNumber()"
+        }
+      }
+    },
+    "schoolSecrets": {
+      "$sid": {
+        ".read": "auth != null && root.child('schools').child($sid).child('admins').child(auth.uid).exists()",
+        ".write": "auth != null && newData.exists() && (root.child('schools').child($sid).child('admins').child(auth.uid).exists() || !data.exists() && !root.child('schools').child($sid).exists() && newData.parent().parent().child('schools').child($sid).child('info').child('createdBy').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['adminCode', 'teacherCode']) && newData.child('adminCode').isString() && newData.child('teacherCode').isString()"
+      }
+    },
+    "schools": {
+      "$sid": {
+        "info": {
+          ".read": "auth != null && root.child('schools').child($sid).child('admins').child(auth.uid).exists()",
+          ".write": "auth != null && newData.exists() && (!data.exists() && newData.child('createdBy').val() === auth.uid || root.child('schools').child($sid).child('admins').child(auth.uid).exists())",
+          ".validate": "newData.hasChildren(['name', 'createdBy']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 60"
+        },
+        "admins": {
+          ".read": "auth != null && root.child('schools').child($sid).child('admins').child(auth.uid).exists()",
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && (auth.uid === $uid && !data.exists() && newData.exists() && (newData.child('code').val() === root.child('schoolSecrets').child($sid).child('adminCode').val() || !root.child('schools').child($sid).child('info').exists() && newData.parent().parent().child('info').child('createdBy').val() === auth.uid) || !newData.exists() && root.child('schools').child($sid).child('admins').child(auth.uid).exists())",
+            ".validate": "newData.hasChildren(['name', 'code', 'joinedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40"
+          }
+        },
+        "classes": {
+          ".read": "auth != null && root.child('schools').child($sid).child('admins').child(auth.uid).exists()",
+          "$cid": {
+            ".write": "auth != null && (root.child('schools').child($sid).child('admins').child(auth.uid).exists() || !data.exists() && newData.exists() && !root.child('classes').child($cid).exists() && newData.parent().parent().parent().parent().child('classes').child($cid).child('info').child('school').val() === $sid && newData.parent().parent().parent().parent().child('classes').child($cid).child('info').child('createdBy').val() === auth.uid)",
+            ".validate": "newData.hasChild('name') && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && (root.child('schools').child($sid).child('admins').child(auth.uid).exists() || newData.child('code').val() === root.child('schoolSecrets').child($sid).child('teacherCode').val())"
+          }
         }
       }
     }

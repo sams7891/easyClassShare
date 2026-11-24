@@ -147,7 +147,7 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun CodeBlock(title: String, hint: String, code: String?, enabled: Boolean, onRenew: () -> Unit) {
+internal fun CodeBlock(title: String, hint: String, code: String?, enabled: Boolean, onRenew: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text(
@@ -165,7 +165,7 @@ private fun CodeBlock(title: String, hint: String, code: String?, enabled: Boole
 }
 
 @Composable
-private fun PersonRow(
+internal fun PersonRow(
     icon: @Composable () -> Unit,
     name: String,
     detail: String? = null,

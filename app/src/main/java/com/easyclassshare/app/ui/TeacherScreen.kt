@@ -85,6 +85,7 @@ import com.easyclassshare.app.ClassViewModel
 import com.easyclassshare.app.R
 import com.easyclassshare.app.online.DeviceInfo
 import com.easyclassshare.app.online.Membership
+import com.easyclassshare.app.online.Role
 import com.easyclassshare.app.online.SentMessage
 import com.easyclassshare.app.online.SoundSettings
 import com.easyclassshare.app.ui.components.AppTopBar
@@ -106,15 +107,19 @@ import java.util.Date
 
 private val MUTE_MINUTES = listOf(10, 20, 30, 45, 60)
 
-/** A teacher's class: sound and "Eyes on me" at the top, then sharing and the tablet list. */
+/**
+ * A teacher's class: sound and "Eyes on me" at the top, then sharing and the tablet list.
+ * A school admin sees the same screen for any class of the school, with [onBack] to the school.
+ */
 @Composable
 fun TeacherClassScreen(
     cvm: ClassViewModel,
     onSettings: () -> Unit,
     onAddClass: () -> Unit,
     onWifiMode: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
-    val membership by cvm.membership.collectAsState()
+    val membership by cvm.current.collectAsState()
     val memberships by cvm.memberships.collectAsState()
     val className by cvm.className.collectAsState()
     val sound by cvm.sound.collectAsState()
@@ -133,9 +138,9 @@ fun TeacherClassScreen(
             Box {
                 AppTopBar(
                     title = title,
-                    onBack = null,
+                    onBack = onBack,
                     subtitle = stringResource(R.string.teacher_devices_summary, devices.count { it.online }, devices.size),
-                    onTitleClick = { showClasses = true },
+                    onTitleClick = if (onBack == null) ({ showClasses = true }) else null,
                     actions = {
                         IconButton(onClick = onSettings) {
                             Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.class_settings))
@@ -893,9 +898,9 @@ private fun TabletRow(
 
 // ---------------------------------------------------------------- class switcher
 
-/** Drop-down list of the teacher's classes, plus "Add a class". */
+/** Drop-down list of the device's classes and schools, plus "Add a class". */
 @Composable
-private fun ClassMenu(
+internal fun ClassMenu(
     expanded: Boolean,
     classes: List<Membership>,
     activeClassId: String?,
@@ -919,7 +924,15 @@ private fun ClassMenu(
                     )
                 },
                 leadingIcon = {
-                    if (m.classId == activeClassId) Icon(Icons.Filled.Check, contentDescription = null, tint = Chalk)
+                    when {
+                        m.classId == activeClassId -> Icon(Icons.Filled.Check, contentDescription = null, tint = Chalk)
+                        m.role == Role.ADMIN -> Icon(drawableIcon(R.drawable.ic_school), contentDescription = null, tint = InkSoft)
+                    }
+                },
+                trailingIcon = if (m.role == Role.ADMIN) {
+                    { Text(stringResource(R.string.school_tag), style = MaterialTheme.typography.bodyMedium, color = InkSoft) }
+                } else {
+                    null
                 },
                 onClick = { onPick(m.classId) },
             )

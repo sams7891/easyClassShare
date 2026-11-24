@@ -3,19 +3,34 @@ package com.easyclassshare.app.online
 import com.easyclassshare.app.data.LinkUtils
 import java.security.SecureRandom
 
-enum class Role { STUDENT, TEACHER }
+/** [ADMIN] is a school admin: teacher rights in every class of the school. */
+enum class Role { STUDENT, TEACHER, ADMIN }
 
 /**
- * This device's place in an online class, saved on the device after the one-time setup.
- * A student tablet has exactly one; a teacher can have several (one per class).
+ * This device's place in an online class or school, saved on the device after the one-time setup.
+ * A student tablet has exactly one; a teacher or admin can have several.
  */
 data class Membership(
+    /** The class id, or for [Role.ADMIN] the school id. */
     val classId: String,
     val role: Role,
     /** The person's name as shown to the class. */
     val name: String,
-    /** Last known class name, so the class list shows names even before going online. */
+    /** Last known class (or school) name, so lists show names even before going online. */
     val className: String = "",
+)
+
+/** What a join code is for. */
+enum class CodeKind { STUDENT, TEACHER, ADMIN, SCHOOL }
+
+/** A class in a school, as the school admins see it. */
+data class SchoolClass(val classId: String, val name: String)
+
+data class SchoolCodes(
+    /** Teachers enter it when creating a class, to put the class into the school. */
+    val schoolCode: String,
+    /** Lets another person become an admin of the school. */
+    val adminCode: String,
 )
 
 /** A student tablet in the class, as the teacher sees it. */
@@ -97,6 +112,8 @@ object JoinCodes {
     const val ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     const val STUDENT_LENGTH = 6
     const val TEACHER_LENGTH = 8
+    const val SCHOOL_LENGTH = 7
+    const val ADMIN_LENGTH = 10
 
     private val random = SecureRandom()
 
@@ -112,5 +129,5 @@ object JoinCodes {
 }
 
 class JoinException(val reason: Reason) : Exception(reason.name) {
-    enum class Reason { CODE_NOT_FOUND, STUDENT_CODE_FOR_TEACHER, TEACHER_CODE_FOR_STUDENT }
+    enum class Reason { CODE_NOT_FOUND, STUDENT_CODE_FOR_TEACHER, TEACHER_CODE_FOR_STUDENT, WRONG_KIND_OF_CODE }
 }

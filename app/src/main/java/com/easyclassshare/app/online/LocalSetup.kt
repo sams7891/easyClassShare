@@ -12,8 +12,8 @@ import org.json.JSONObject
 /**
  * Remembers which classes this device is in, so the setup only has to be done once.
  *
- * A student tablet is in exactly one class. A teacher can be in several classes
- * and picks which one is shown ([membership] is the active one).
+ * A student tablet is in exactly one class. A teacher can be in several classes (and an
+ * admin in several schools) and picks which one is shown ([membership] is the active one).
  */
 object LocalSetup {
     private lateinit var appContext: Context
@@ -46,7 +46,8 @@ object LocalSetup {
         val list = if (membership.role == Role.STUDENT) {
             listOf(membership)
         } else {
-            _memberships.value.filter { it.role == Role.TEACHER && it.classId != membership.classId } + membership
+            // Teachers and school admins can have several classes and schools on one device.
+            _memberships.value.filter { it.role != Role.STUDENT && !it.sameClass(membership) } + membership
         }
         if (membership.role == Role.STUDENT) {
             lastAnnouncedMessageTime = 0L

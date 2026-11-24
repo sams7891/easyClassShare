@@ -39,6 +39,11 @@ import kotlinx.coroutines.tasks.await
  * classes/{classId}/inbox/{uid}/{id}   -> { from, content, ts, by }            (one tablet)
  * classes/{classId}/opened/{id}/{uid}  -> ts                                   (who opened it)
  * classes/{classId}/attention          -> { text, from, ts }                   ("Eyes on me")
+ * schools/{schoolId}/info              -> { name, createdBy, createdAt }
+ * schools/{schoolId}/admins/{uid}      -> { name, code, joinedAt }
+ * schools/{schoolId}/classes/{classId} -> { name, code? }    (classes/{classId}/info/school = schoolId)
+ * schoolSecrets/{schoolId}             -> { adminCode, teacherCode }           (admins only)
+ * joinCodes/{code}                     -> { schoolId, role: "admin" | "school" }
  * ```
  *
  * Every device signs in anonymously; its user id stands for "this tablet".
@@ -68,24 +73,56 @@ object ClassRepository {
 
     // ---------------------------------------------------------------- setup
 
-    suspend fun createClass(className: String, teacherName: String): Membership {
+    /**
+     * Creates a class with this device as its first teacher. With a [schoolCode] the class
+     * becomes part of that school, so the school's admins can manage it too.
+     */
+    suspend fun createClass(className: String, teacherName: String, schoolCode: String? = null): Membership {
         val uid = uid()
+        val school = schoolCode?.takeIf { it.isNotBlank() }?.let { raw ->
+            val code = JoinCodes.normalize(raw)
+            if (!JoinCodes.isWellFormed(code)) throw JoinException(JoinException.Reason.CODE_NOT_FOUND)
+            val (schoolId, kind) = lookUpCode(code) ?: throw JoinException(JoinException.Reason.CODE_NOT_FOUND)
+            if (kind != CodeKind.SCHOOL) throw JoinException(JoinException.Reason.WRONG_KIND_OF_CODE)
+            schoolId to code
+        }
+        val classId = newClassUpdates(className, uid, school?.first, school?.second).let { (id, updates) ->
+            updates["classes/$id/teachers/$uid"] = mapOf(
+                "name" to teacherName,
+                "code" to updates.teacherCodeOf(id),
+                "joinedAt" to ServerValue.TIMESTAMP,
+            )
+            root.updateChildren(updates).await()
+            id
+        }
+        return Membership(classId, Role.TEACHER, teacherName, className)
+    }
+
+    /** A school admin adds a class to the school (without becoming one of its teachers). */
+    suspend fun createSchoolClass(schoolId: String, className: String): String {
+        val uid = uid()
+        val (classId, updates) = newClassUpdates(className, uid, schoolId, schoolCode = null)
+        root.updateChildren(updates).await()
+        return classId
+    }
+
+    private fun newClassUpdates(
+        className: String,
+        uid: String,
+        schoolId: String?,
+        schoolCode: String?,
+    ): Pair<String, HashMap<String, Any?>> {
         val classId = root.child("classes").push().key ?: throw IllegalStateException("No class id")
         val codes = ClassCodes(
             studentCode = JoinCodes.generate(JoinCodes.STUDENT_LENGTH),
             teacherCode = JoinCodes.generate(JoinCodes.TEACHER_LENGTH),
         )
+        val info = hashMapOf<String, Any?>(
+            "name" to className,
+            "createdBy" to uid,
+            "createdAt" to ServerValue.TIMESTAMP,
+        )
         val updates = hashMapOf<String, Any?>(
-            "classes/$classId/info" to mapOf(
-                "name" to className,
-                "createdBy" to uid,
-                "createdAt" to ServerValue.TIMESTAMP,
-            ),
-            "classes/$classId/teachers/$uid" to mapOf(
-                "name" to teacherName,
-                "code" to codes.teacherCode,
-                "joinedAt" to ServerValue.TIMESTAMP,
-            ),
             "classSecrets/$classId" to mapOf(
                 "studentCode" to codes.studentCode,
                 "teacherCode" to codes.teacherCode,
@@ -93,33 +130,84 @@ object ClassRepository {
             "joinCodes/${codes.studentCode}" to mapOf("classId" to classId, "role" to "student"),
             "joinCodes/${codes.teacherCode}" to mapOf("classId" to classId, "role" to "teacher"),
         )
-        root.updateChildren(updates).await()
-        return Membership(classId, Role.TEACHER, teacherName, className)
+        if (schoolId != null) {
+            info["school"] = schoolId
+            val entry = hashMapOf<String, Any?>("name" to className)
+            if (schoolCode != null) entry["code"] = schoolCode
+            updates["schools/$schoolId/classes/$classId"] = entry
+        }
+        updates["classes/$classId/info"] = info
+        return classId to updates
     }
 
-    /** Joins with a student or teacher code. [expectedRole] stops a student from joining with a teacher code by mistake. */
+    @Suppress("UNCHECKED_CAST")
+    private fun HashMap<String, Any?>.teacherCodeOf(classId: String): String =
+        (this["classSecrets/$classId"] as Map<String, Any?>)["teacherCode"] as String
+
+    /** Creates a school with this device as its first admin. */
+    suspend fun createSchool(schoolName: String, adminName: String): Membership {
+        val uid = uid()
+        val schoolId = root.child("schools").push().key ?: throw IllegalStateException("No school id")
+        val codes = SchoolCodes(
+            schoolCode = JoinCodes.generate(JoinCodes.SCHOOL_LENGTH),
+            adminCode = JoinCodes.generate(JoinCodes.ADMIN_LENGTH),
+        )
+        val updates = hashMapOf<String, Any?>(
+            "schools/$schoolId/info" to mapOf(
+                "name" to schoolName,
+                "createdBy" to uid,
+                "createdAt" to ServerValue.TIMESTAMP,
+            ),
+            "schools/$schoolId/admins/$uid" to mapOf(
+                "name" to adminName,
+                "code" to codes.adminCode,
+                "joinedAt" to ServerValue.TIMESTAMP,
+            ),
+            "schoolSecrets/$schoolId" to mapOf(
+                "adminCode" to codes.adminCode,
+                "teacherCode" to codes.schoolCode,
+            ),
+            "joinCodes/${codes.schoolCode}" to mapOf("schoolId" to schoolId, "role" to "school"),
+            "joinCodes/${codes.adminCode}" to mapOf("schoolId" to schoolId, "role" to "admin"),
+        )
+        root.updateChildren(updates).await()
+        return Membership(schoolId, Role.ADMIN, adminName, schoolName)
+    }
+
+    /**
+     * Joins a class with a student or teacher code, or a school with an admin code.
+     * [expectedRole] stops e.g. a student from joining with a teacher code by mistake.
+     */
     suspend fun join(rawCode: String, name: String, expectedRole: Role): Membership {
         val code = JoinCodes.normalize(rawCode)
         if (!JoinCodes.isWellFormed(code)) throw JoinException(JoinException.Reason.CODE_NOT_FOUND)
         val uid = uid()
-        val (classId, role) = lookUpCode(code) ?: throw JoinException(JoinException.Reason.CODE_NOT_FOUND)
-        if (role != expectedRole) {
+        val (id, kind) = lookUpCode(code) ?: throw JoinException(JoinException.Reason.CODE_NOT_FOUND)
+        val role = when (kind) {
+            CodeKind.STUDENT -> Role.STUDENT
+            CodeKind.TEACHER -> Role.TEACHER
+            CodeKind.ADMIN -> Role.ADMIN
+            CodeKind.SCHOOL -> null
+        }
+        if (role == null || role != expectedRole) {
             throw JoinException(
-                if (role == Role.STUDENT) {
-                    JoinException.Reason.STUDENT_CODE_FOR_TEACHER
-                } else {
-                    JoinException.Reason.TEACHER_CODE_FOR_STUDENT
+                when {
+                    role == Role.STUDENT && expectedRole == Role.TEACHER -> JoinException.Reason.STUDENT_CODE_FOR_TEACHER
+                    role == Role.TEACHER && expectedRole == Role.STUDENT -> JoinException.Reason.TEACHER_CODE_FOR_STUDENT
+                    else -> JoinException.Reason.WRONG_KIND_OF_CODE
                 },
             )
         }
+        val classId = id
         val node = memberRef(classId, role, uid)
         // Joining again (e.g. after the app was set up anew) replaces the old entry.
         if (node.get().await().exists()) node.removeValue().await()
         node.setValue(
             mapOf("name" to name, "code" to code, "joinedAt" to ServerValue.TIMESTAMP),
         ).await()
+        val infoRef = if (role == Role.ADMIN) root.child("schools").child(classId) else classRef(classId)
         val className = runCatching {
-            classRef(classId).child("info").child("name").get().await().value as? String
+            infoRef.child("info").child("name").get().await().value as? String
         }.getOrNull().orEmpty()
         return Membership(classId, role, name, className)
     }
@@ -130,18 +218,21 @@ object ClassRepository {
         if (!JoinCodes.isWellFormed(code)) return false
         uid()
         val found = lookUpCode(code) ?: return false
-        return found.first == classId && found.second == Role.TEACHER
+        return found.first == classId && found.second == CodeKind.TEACHER
     }
 
-    private suspend fun lookUpCode(code: String): Pair<String, Role>? {
+    /** What a code opens: a class (student/teacher) or a school (admin/school). */
+    private suspend fun lookUpCode(code: String): Pair<String, CodeKind>? {
         val snapshot = root.child("joinCodes").child(code).get().await()
-        val classId = snapshot.child("classId").value as? String ?: return null
-        val role = when (snapshot.child("role").value as? String) {
-            "student" -> Role.STUDENT
-            "teacher" -> Role.TEACHER
+        val id = (snapshot.child("classId").value ?: snapshot.child("schoolId").value) as? String ?: return null
+        val kind = when (snapshot.child("role").value as? String) {
+            "student" -> CodeKind.STUDENT
+            "teacher" -> CodeKind.TEACHER
+            "admin" -> CodeKind.ADMIN
+            "school" -> CodeKind.SCHOOL
             else -> return null
         }
-        return classId to role
+        return id to kind
     }
 
     suspend fun leave(membership: Membership) {
@@ -150,8 +241,13 @@ object ClassRepository {
         node.removeValue().await()
     }
 
-    private fun memberRef(classId: String, role: Role, uid: String): DatabaseReference =
-        classRef(classId).child(if (role == Role.TEACHER) "teachers" else "devices").child(uid)
+    private fun memberRef(id: String, role: Role, uid: String): DatabaseReference = when (role) {
+        Role.STUDENT -> classRef(id).child("devices").child(uid)
+        Role.TEACHER -> classRef(id).child("teachers").child(uid)
+        Role.ADMIN -> schoolRef(id).child("admins").child(uid)
+    }
+
+    private fun schoolRef(schoolId: String) = root.child("schools").child(schoolId)
 
     // ---------------------------------------------------------------- live data (everyone)
 
@@ -394,6 +490,61 @@ object ClassRepository {
             ClassCodes(oldStudent, fresh)
         }
         updates["classSecrets/$classId"] = mapOf("studentCode" to codes.studentCode, "teacherCode" to codes.teacherCode)
+        root.updateChildren(updates).await()
+    }
+
+    // ---------------------------------------------------------------- school admins
+
+    fun schoolName(schoolId: String): Flow<String?> =
+        schoolRef(schoolId).child("info").child("name").values().map { it.value as? String }
+
+    fun schoolClasses(schoolId: String): Flow<List<SchoolClass>> =
+        schoolRef(schoolId).child("classes").values().map { snapshot ->
+            snapshot.children.mapNotNull { child ->
+                val id = child.key ?: return@mapNotNull null
+                SchoolClass(id, child.child("name").value as? String ?: "")
+            }.sortedBy { it.name.lowercase() }
+        }
+
+    fun schoolAdmins(schoolId: String): Flow<List<TeacherInfo>> =
+        schoolRef(schoolId).child("admins").values().map { snapshot ->
+            snapshot.children.mapNotNull { child ->
+                val uid = child.key ?: return@mapNotNull null
+                TeacherInfo(uid, child.child("name").value as? String ?: "")
+            }.sortedBy { it.name.lowercase() }
+        }
+
+    fun schoolCodes(schoolId: String): Flow<SchoolCodes?> =
+        root.child("schoolSecrets").child(schoolId).values().map { snapshot ->
+            val school = snapshot.child("teacherCode").value as? String
+            val admin = snapshot.child("adminCode").value as? String
+            if (school != null && admin != null) SchoolCodes(school, admin) else null
+        }
+
+    suspend fun removeAdmin(schoolId: String, adminUid: String) {
+        uid()
+        schoolRef(schoolId).child("admins").child(adminUid).removeValue().await()
+    }
+
+    /** Makes a new school code ([CodeKind.SCHOOL]) or admin code; the old one stops working. */
+    suspend fun renewSchoolCode(schoolId: String, kind: CodeKind) {
+        uid()
+        val current = root.child("schoolSecrets").child(schoolId).get().await()
+        val oldSchool = current.child("teacherCode").value as? String ?: return
+        val oldAdmin = current.child("adminCode").value as? String ?: return
+        val updates = hashMapOf<String, Any?>()
+        val codes = if (kind == CodeKind.SCHOOL) {
+            val fresh = JoinCodes.generate(JoinCodes.SCHOOL_LENGTH)
+            updates["joinCodes/$oldSchool"] = null
+            updates["joinCodes/$fresh"] = mapOf("schoolId" to schoolId, "role" to "school")
+            SchoolCodes(fresh, oldAdmin)
+        } else {
+            val fresh = JoinCodes.generate(JoinCodes.ADMIN_LENGTH)
+            updates["joinCodes/$oldAdmin"] = null
+            updates["joinCodes/$fresh"] = mapOf("schoolId" to schoolId, "role" to "admin")
+            SchoolCodes(oldSchool, fresh)
+        }
+        updates["schoolSecrets/$schoolId"] = mapOf("adminCode" to codes.adminCode, "teacherCode" to codes.schoolCode)
         root.updateChildren(updates).await()
     }
 

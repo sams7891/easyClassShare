@@ -31,6 +31,10 @@ project uses [Semantic Versioning](https://semver.org/).
 - **Eyes on me**: a full-screen message on every student tablet until the
   teacher ends it.
 - Teachers can **rename tablets**.
+- **Schools and school admins**: an admin creates a school (or joins with an
+  admin code) and can manage every class of the school with full teacher
+  rights, without being one of its teachers. Teachers add a class to a school
+  with the school code when creating it; admins can also create classes.
 
 ### Fixed
 - Muting the class no longer disabled the send button and showed "Sending…".

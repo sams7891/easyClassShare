@@ -10,12 +10,15 @@ import com.easyclassshare.app.data.ShareMessage
 import com.easyclassshare.app.online.Attention
 import com.easyclassshare.app.online.ClassCodes
 import com.easyclassshare.app.online.ClassRepository
+import com.easyclassshare.app.online.CodeKind
 import com.easyclassshare.app.online.DeviceInfo
 import com.easyclassshare.app.online.JoinException
 import com.easyclassshare.app.online.LocalSetup
 import com.easyclassshare.app.online.Membership
 import com.easyclassshare.app.online.OnlineConfig
 import com.easyclassshare.app.online.Role
+import com.easyclassshare.app.online.SchoolClass
+import com.easyclassshare.app.online.SchoolCodes
 import com.easyclassshare.app.online.SentMessage
 import com.easyclassshare.app.online.SoundSettings
 import com.easyclassshare.app.online.TeacherInfo
@@ -27,9 +30,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -44,8 +49,24 @@ import kotlinx.coroutines.withTimeout
 class ClassViewModel(application: Application) : AndroidViewModel(application) {
     val isConfigured: Boolean = OnlineConfig.isConfigured
 
-    /** The class shown right now. */
+    /** The class (or, for an admin, the school) chosen on this device. */
     val membership: StateFlow<Membership?> = LocalSetup.membership
+
+    /** A school class an admin opened. The admin gets teacher rights there without being a member. */
+    private val adminClass = MutableStateFlow<Membership?>(null)
+
+    /**
+     * The class shown on the class screens: the chosen class, or the school class an admin opened.
+     * Always has role STUDENT or TEACHER.
+     */
+    val current: StateFlow<Membership?> = combine(membership, adminClass) { m, opened ->
+        if (m?.role == Role.ADMIN) opened else m
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, membership.value.takeIf { it?.role != Role.ADMIN })
+
+    /** True while an admin is looking at one of the school's classes. */
+    val isAdminView: StateFlow<Boolean> = combine(membership, adminClass) { m, opened ->
+        m?.role == Role.ADMIN && opened != null
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /** All classes of this device (a teacher can have several). */
     val memberships: StateFlow<List<Membership>> = LocalSetup.memberships
@@ -55,7 +76,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Follows [block] for the current class, or shows [initial] when there is none. */
     private fun <T> live(initial: T, teacherOnly: Boolean = false, block: (Membership) -> Flow<T>): StateFlow<T> =
-        membership.flatMapLatest { m ->
+        current.flatMapLatest { m ->
             if (m == null || (teacherOnly && m.role != Role.TEACHER)) {
                 flowOf(initial)
             } else {
@@ -103,6 +124,19 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     }
     val codes: StateFlow<ClassCodes?> = live(null, teacherOnly = true) { ClassRepository.codes(it.classId) }
 
+    // School admin only (for the chosen school)
+    private fun <T> school(initial: T, block: (schoolId: String) -> Flow<T>): StateFlow<T> =
+        membership.flatMapLatest { m ->
+            if (m?.role != Role.ADMIN) flowOf(initial) else block(m.classId).catch { emit(initial) }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), initial)
+
+    val schoolName: StateFlow<String?> = school(null) { id ->
+        ClassRepository.schoolName(id).onEach { name -> if (name != null) LocalSetup.updateClassName(id, name) }
+    }
+    val schoolClasses: StateFlow<List<SchoolClass>> = school(emptyList()) { ClassRepository.schoolClasses(it) }
+    val schoolAdmins: StateFlow<List<TeacherInfo>> = school(emptyList()) { ClassRepository.schoolAdmins(it) }
+    val schoolCodes: StateFlow<SchoolCodes?> = school(null) { ClassRepository.schoolCodes(it) }
+
     /** A class action (sound, codes, removing...) is running. Sending has its own flag, [sending]. */
     var busy by mutableStateOf(false)
         private set
@@ -125,6 +159,15 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     init {
+        // An opened school class closes when the device is no longer working as that school's admin.
+        viewModelScope.launch {
+            var schoolId: String? = null
+            membership.collect { m ->
+                val now = m?.takeIf { it.role == Role.ADMIN }?.classId
+                if (now != schoolId) adminClass.value = null
+                schoolId = now
+            }
+        }
         // Notice when a teacher removes this device (or this teacher) from any of its classes.
         viewModelScope.launch {
             memberships.flatMapLatest { list ->
@@ -147,12 +190,22 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
 
     // ---------------------------------------------------------------- setup
 
-    /** The teacher's name from an earlier class, to fill in when adding another class. */
+    /** The teacher's or admin's name from an earlier class or school, to fill in next time. */
     val knownTeacherName: String
-        get() = memberships.value.lastOrNull { it.role == Role.TEACHER }?.name.orEmpty()
+        get() = memberships.value.lastOrNull { it.role != Role.STUDENT }?.name.orEmpty()
 
-    fun createClass(className: String, teacherName: String, onDone: () -> Unit) = runAction {
-        val m = ClassRepository.createClass(className.trim().take(MAX_NAME), teacherName.trim().take(MAX_NAME))
+    fun createClass(className: String, teacherName: String, schoolCode: String, onDone: () -> Unit) = runAction {
+        val m = ClassRepository.createClass(
+            className.trim().take(MAX_NAME),
+            teacherName.trim().take(MAX_NAME),
+            schoolCode.trim().ifEmpty { null },
+        )
+        LocalSetup.save(m)
+        onDone()
+    }
+
+    fun createSchool(schoolName: String, adminName: String, onDone: () -> Unit) = runAction {
+        val m = ClassRepository.createSchool(schoolName.trim().take(MAX_SCHOOL_NAME), adminName.trim().take(MAX_NAME))
         LocalSetup.save(m)
         onDone()
     }
@@ -165,10 +218,47 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun switchClass(classId: String) {
+        resetClassView()
+        adminClass.value = null
+        LocalSetup.setActive(classId)
+    }
+
+    private fun resetClassView() {
         clearError()
         draft = ""
         recipients = null
-        LocalSetup.setActive(classId)
+        sendResult = null
+    }
+
+    // ---------------------------------------------------------------- school admin
+
+    /** An admin opens one of the school's classes with full teacher rights. */
+    fun openSchoolClass(schoolClass: SchoolClass) {
+        val school = membership.value?.takeIf { it.role == Role.ADMIN } ?: return
+        resetClassView()
+        adminClass.value = Membership(schoolClass.classId, Role.TEACHER, school.name, schoolClass.name)
+    }
+
+    fun closeSchoolClass() {
+        resetClassView()
+        adminClass.value = null
+    }
+
+    fun createSchoolClass(className: String, onDone: () -> Unit) = runAction {
+        val school = membership.value?.takeIf { it.role == Role.ADMIN } ?: return@runAction
+        val name = className.trim().take(MAX_NAME)
+        val classId = ClassRepository.createSchoolClass(school.classId, name)
+        onDone()
+        openSchoolClass(SchoolClass(classId, name))
+    }
+
+    fun renewSchoolCode(kind: CodeKind) = schoolAction { ClassRepository.renewSchoolCode(it, kind) }
+
+    fun removeAdmin(adminUid: String) = schoolAction { ClassRepository.removeAdmin(it, adminUid) }
+
+    private fun schoolAction(block: suspend (schoolId: String) -> Unit) = runAction {
+        val m = membership.value ?: return@runAction
+        if (m.role == Role.ADMIN) block(m.classId)
     }
 
     /** Teachers leave freely; students need a teacher code so kids can't just walk out of class. */
@@ -206,7 +296,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun send() {
-        val m = membership.value ?: return
+        val m = current.value ?: return
         val content = draft.trim()
         if (content.isEmpty() || sending) return
         val targets = recipients
@@ -253,7 +343,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Puts "Eyes on me" on every student tablet, or takes it away. */
     fun setAttention(on: Boolean, text: String) = teacherAction {
-        val m = membership.value ?: return@teacherAction
+        val m = current.value ?: return@teacherAction
         ClassRepository.setAttention(it, if (on) Attention(text, m.name) else null)
     }
 
@@ -264,7 +354,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     fun renewCode(role: Role) = teacherAction { ClassRepository.renewCode(it, role) }
 
     private fun teacherAction(block: suspend (classId: String) -> Unit) = runAction {
-        val m = membership.value ?: return@runAction
+        val m = current.value ?: return@runAction
         if (m.role == Role.TEACHER) block(m.classId)
     }
 
@@ -284,6 +374,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
                     JoinException.Reason.CODE_NOT_FOUND -> R.string.online_error_code
                     JoinException.Reason.STUDENT_CODE_FOR_TEACHER -> R.string.online_error_student_code
                     JoinException.Reason.TEACHER_CODE_FOR_STUDENT -> R.string.online_error_teacher_code
+                    JoinException.Reason.WRONG_KIND_OF_CODE -> R.string.online_error_wrong_code
                 }
             } catch (e: Exception) {
                 error = R.string.online_error_generic
@@ -298,6 +389,7 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
         private const val ACTION_TIMEOUT_MS = 20_000L
         private const val SEND_TIMEOUT_MS = 15_000L
         private const val MAX_NAME = 40
+        private const val MAX_SCHOOL_NAME = 60
 
         /** Fire-and-forget "opened" report; also used when a link is opened from a notification. */
         fun reportOpened(classId: String, messageId: String) {

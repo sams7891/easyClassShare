@@ -61,13 +61,25 @@
 
     <!-- Online class: setup -->
     <string name="setup_title">Set up</string>
-    <string name="setup_add_class_title">Add a class</string>
+    <string name="setup_add_class_title">Add a class or school</string>
     <string name="setup_not_configured">Online classes are not switched on in this version of the app. Whoever builds the app can turn them on with the Firebase steps in the README.</string>
     <string name="setup_who">Who uses this tablet?</string>
     <string name="setup_student_title">Student</string>
     <string name="setup_student_subtitle">Join a class with a class code</string>
     <string name="setup_teacher_title">Teacher</string>
     <string name="setup_teacher_subtitle">Create a class or join one</string>
+    <string name="setup_admin_title">School admin</string>
+    <string name="setup_admin_subtitle">Create a school or join one, and manage all of its classes</string>
+    <string name="setup_create_school_title">New school</string>
+    <string name="setup_create_school_subtitle">Create a school and get its codes</string>
+    <string name="setup_admin_join_title">Join as an admin</string>
+    <string name="setup_admin_join_subtitle">Use an admin code from another admin</string>
+    <string name="setup_school_name">School name</string>
+    <string name="setup_create_school_hint">You get a school code for your teachers and an admin code for other admins.</string>
+    <string name="setup_create_school_button">Create school</string>
+    <string name="setup_admin_join_button">Join as admin</string>
+    <string name="setup_school_code_optional">School code (optional)</string>
+    <string name="setup_school_code_hint">If your school uses Easy Class Share, enter its school code. Then the school admins can help manage this class.</string>
     <string name="setup_once_tip">You only do this once. The tablet remembers its class, even after a restart.</string>
     <string name="setup_create_title">New class</string>
     <string name="setup_create_subtitle">Create a class and get its codes</string>
@@ -87,6 +99,7 @@
     <string name="online_error_code">That code doesn\'t work. Check it and try again.</string>
     <string name="online_error_student_code">That is a class code for students. Ask for the teacher code.</string>
     <string name="online_error_teacher_code">That is a teacher code. Ask your teacher for the class code.</string>
+    <string name="online_error_wrong_code">That code is for something else. Check which code you need.</string>
     <string name="online_error_leave_code">That teacher code isn\'t right.</string>
     <string name="online_error_connection">No connection. Check the internet and try again.</string>
     <string name="online_error_generic">Something went wrong. Check the internet and try again.</string>
@@ -166,6 +179,28 @@
     <string name="rename_title">Rename tablet</string>
     <string name="rename_text">The new name shows here and on the tablet.</string>
     <string name="rename_label">Name</string>
+
+    <!-- School admin -->
+    <string name="school_tag">School</string>
+    <string name="school_default_name">My school</string>
+    <string name="school_subtitle">School admin · %1$d classes</string>
+    <string name="school_tab_classes">Classes (%1$d)</string>
+    <string name="school_tab_settings">School settings</string>
+    <string name="school_new_class">New class</string>
+    <string name="school_new_class_text">The class is added to the school. Give its teacher code to the class teacher.</string>
+    <string name="school_no_classes_title">No classes yet</string>
+    <string name="school_no_classes_text">Create a class here, or give your teachers the school code %1$s. They enter it when they create a class.</string>
+    <string name="school_code">School code</string>
+    <string name="school_code_hint">For teachers: they enter it when they create a class, so the class belongs to the school.</string>
+    <string name="admin_code">Admin code</string>
+    <string name="admin_code_hint">Only for other admins. Anyone with this code can manage every class of the school.</string>
+    <string name="school_admins">Admins (%1$d)</string>
+    <string name="leave_school_button">Leave school</string>
+    <string name="confirm_renew_school">Make a new school code? The old one stops working. Classes already in the school stay in.</string>
+    <string name="confirm_renew_admin">Make a new admin code? The old one stops working. Admins already in the school stay in.</string>
+    <string name="confirm_remove_admin">Remove %1$s as an admin of this school?</string>
+    <string name="confirm_leave_school">Leave this school on this device? The other admins keep it.</string>
+    <string name="confirm_leave_last_admin">You are the only admin. If you leave, nobody can manage the school any more. Leave anyway?</string>
 
     <!-- Online class: manage -->
     <string name="manage_codes">Codes</string>

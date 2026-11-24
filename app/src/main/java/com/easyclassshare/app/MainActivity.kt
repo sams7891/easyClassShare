@@ -24,6 +24,7 @@ import com.easyclassshare.app.service.Notifications
 import com.easyclassshare.app.ui.HomeScreen
 import com.easyclassshare.app.ui.ManageClassScreen
 import com.easyclassshare.app.ui.ReceiverScreen
+import com.easyclassshare.app.ui.SchoolScreen
 import com.easyclassshare.app.ui.SenderScreen
 import com.easyclassshare.app.ui.SetupScreen
 import com.easyclassshare.app.ui.StudentClassScreen
@@ -93,7 +94,7 @@ class MainActivity : ComponentActivity() {
                 vm.screen = Screen.CLASS
             }
             Role.STUDENT -> Unit // students can't send
-            null -> {
+            Role.ADMIN, null -> {
                 vm.updateDraft(text)
                 vm.screen = Screen.SEND
             }
@@ -106,16 +107,31 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
     val membership by cvm.membership.collectAsState()
     val memberships by cvm.memberships.collectAsState()
     val removedFrom by cvm.removedFrom.collectAsState()
-    val home = if (membership != null) Screen.CLASS else Screen.HOME
+    val adminView by cvm.isAdminView.collectAsState()
+    val home = when (membership?.role) {
+        null -> Screen.HOME
+        Role.ADMIN -> Screen.SCHOOL
+        else -> Screen.CLASS
+    }
     val goHome = { vm.screen = home }
+    val backToClass = { vm.screen = Screen.CLASS }
+    val backToSchool = {
+        cvm.closeSchoolClass()
+        vm.screen = Screen.SCHOOL
+    }
 
-    // Follow joining/leaving the class. Student tablets stay on the class screen.
-    LaunchedEffect(membership, vm.screen) {
-        val m = membership
+    // Follow joining/leaving and switching between classes and schools.
+    // Student tablets stay on the class screen.
+    LaunchedEffect(membership, vm.screen, adminView) {
+        val role = membership?.role
+        val screen = vm.screen
         val target = when {
-            m == null && vm.screen in setOf(Screen.CLASS, Screen.MANAGE) -> Screen.HOME
-            m != null && vm.screen == Screen.HOME -> Screen.CLASS
-            m?.role == Role.STUDENT && vm.screen != Screen.CLASS -> Screen.CLASS
+            role == null && screen in setOf(Screen.CLASS, Screen.MANAGE, Screen.SCHOOL) -> Screen.HOME
+            role != null && screen == Screen.HOME -> home
+            role == Role.STUDENT && screen != Screen.CLASS -> Screen.CLASS
+            role == Role.TEACHER && screen == Screen.SCHOOL -> Screen.CLASS
+            role == Role.ADMIN && !adminView && screen in setOf(Screen.CLASS, Screen.MANAGE) -> Screen.SCHOOL
+            role == Role.ADMIN && adminView && screen == Screen.SCHOOL -> Screen.CLASS
             else -> null
         }
         if (target != null) vm.screen = target
@@ -139,8 +155,9 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
             }
             Screen.SETUP -> SetupScreen(
                 cvm,
-                addingClass = memberships.any { it.role == Role.TEACHER },
+                addingClass = memberships.any { it.role != Role.STUDENT },
                 onBack = goHome,
+                // The navigation effect above moves admins on to their school.
                 onDone = { vm.screen = Screen.CLASS },
             )
             Screen.CLASS -> when (membership?.role) {
@@ -151,12 +168,30 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
                     onAddClass = { cvm.clearError(); vm.screen = Screen.SETUP },
                     onWifiMode = { vm.screen = Screen.SEND },
                 )
+                Role.ADMIN -> if (adminView) {
+                    BackHandler(onBack = backToSchool)
+                    TeacherClassScreen(
+                        cvm,
+                        onSettings = { cvm.clearError(); vm.screen = Screen.MANAGE },
+                        onAddClass = { cvm.clearError(); vm.screen = Screen.SETUP },
+                        onWifiMode = { vm.screen = Screen.SEND },
+                        onBack = backToSchool,
+                    )
+                } else {
+                    Unit
+                }
                 null -> Unit
             }
             Screen.MANAGE -> {
-                BackHandler(onBack = goHome)
-                ManageClassScreen(cvm, onBack = goHome)
+                BackHandler(onBack = backToClass)
+                ManageClassScreen(cvm, onBack = backToClass)
             }
+            Screen.SCHOOL -> SchoolScreen(
+                cvm,
+                onOpenClass = { cvm.openSchoolClass(it); vm.screen = Screen.CLASS },
+                onAddClassOrSchool = { cvm.clearError(); vm.screen = Screen.SETUP },
+                onWifiMode = { vm.screen = Screen.SEND },
+            )
         }
     }
 

@@ -59,11 +59,12 @@ import com.easyclassshare.app.ui.theme.PencilLight
 import com.easyclassshare.app.ui.theme.Sky
 import com.easyclassshare.app.ui.theme.SkyLight
 
-private enum class SetupStep { CHOOSE, STUDENT, TEACHER, CREATE, TEACHER_JOIN }
+private enum class SetupStep { CHOOSE, STUDENT, TEACHER, CREATE, TEACHER_JOIN, ADMIN, CREATE_SCHOOL, ADMIN_JOIN }
 
 /**
- * One-time setup: put this device into an online class as a student or a teacher.
- * With [addingClass] a teacher who already has classes adds another one.
+ * One-time setup: put this device into an online class as a student or a teacher,
+ * or into a school as its admin.
+ * With [addingClass] a teacher or admin who already has classes adds another class or school.
  */
 @Composable
 fun SetupScreen(cvm: ClassViewModel, addingClass: Boolean, onBack: () -> Unit, onDone: () -> Unit) {
@@ -74,8 +75,11 @@ fun SetupScreen(cvm: ClassViewModel, addingClass: Boolean, onBack: () -> Unit, o
         if (step == firstStep) {
             onBack()
         } else {
-            val previous = if (step == SetupStep.CREATE || step == SetupStep.TEACHER_JOIN) SetupStep.TEACHER else SetupStep.CHOOSE
-            step = previous
+            step = when (step) {
+                SetupStep.CREATE, SetupStep.TEACHER_JOIN -> SetupStep.TEACHER
+                SetupStep.CREATE_SCHOOL, SetupStep.ADMIN_JOIN -> if (addingClass) SetupStep.TEACHER else SetupStep.ADMIN
+                else -> SetupStep.CHOOSE
+            }
         }
     }
     BackHandler(onBack = back)
@@ -109,6 +113,10 @@ fun SetupScreen(cvm: ClassViewModel, addingClass: Boolean, onBack: () -> Unit, o
                             Icons.Filled.Person, Chalk, ChalkLight,
                             R.string.setup_teacher_title, R.string.setup_teacher_subtitle,
                         ) { step = SetupStep.TEACHER }
+                        ChoiceCard(
+                            drawableIcon(R.drawable.ic_school), Ink, PencilLight,
+                            R.string.setup_admin_title, R.string.setup_admin_subtitle,
+                        ) { step = SetupStep.ADMIN }
                         Text(stringResource(R.string.setup_once_tip), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
                     }
                     step == SetupStep.TEACHER -> {
@@ -120,7 +128,11 @@ fun SetupScreen(cvm: ClassViewModel, addingClass: Boolean, onBack: () -> Unit, o
                             drawableIcon(R.drawable.ic_group), Ink, PencilLight,
                             R.string.setup_cojoin_title, R.string.setup_cojoin_subtitle,
                         ) { step = SetupStep.TEACHER_JOIN }
+                        if (addingClass) SchoolChoices { step = it }
                     }
+                    step == SetupStep.ADMIN -> SchoolChoices { step = it }
+                    step == SetupStep.CREATE_SCHOOL -> CreateSchoolForm(cvm, onDone)
+                    step == SetupStep.ADMIN_JOIN -> JoinForm(cvm, Role.ADMIN, onDone)
                     step == SetupStep.STUDENT -> JoinForm(cvm, Role.STUDENT, onDone)
                     step == SetupStep.TEACHER_JOIN -> JoinForm(cvm, Role.TEACHER, onDone)
                     step == SetupStep.CREATE -> CreateForm(cvm, onDone)
@@ -141,13 +153,24 @@ private fun JoinForm(cvm: ClassViewModel, role: Role, onDone: () -> Unit) {
             stringResource(if (isStudent) R.string.setup_student_name else R.string.setup_name),
             if (isStudent) Icons.Filled.Face else Icons.Filled.Person,
         )
-        CodeField(code, { code = it }, stringResource(if (isStudent) R.string.setup_class_code else R.string.setup_teacher_code))
+        CodeField(
+            code,
+            { code = it },
+            stringResource(
+                when (role) {
+                    Role.STUDENT -> R.string.setup_class_code
+                    Role.TEACHER -> R.string.setup_teacher_code
+                    Role.ADMIN -> R.string.admin_code
+                },
+            ),
+        )
         ErrorText(cvm.error)
         BigButton(
             text = stringResource(
                 when {
                     cvm.busy -> R.string.setup_working
                     isStudent -> R.string.setup_join_button
+                    role == Role.ADMIN -> R.string.setup_admin_join_button
                     else -> R.string.setup_cojoin_button
                 },
             ),
@@ -161,14 +184,52 @@ private fun JoinForm(cvm: ClassViewModel, role: Role, onDone: () -> Unit) {
 private fun CreateForm(cvm: ClassViewModel, onDone: () -> Unit) {
     var teacherName by rememberSaveable { mutableStateOf(cvm.knownTeacherName) }
     var className by rememberSaveable { mutableStateOf("") }
+    var schoolCode by rememberSaveable { mutableStateOf("") }
     Panel {
         KidTextField(teacherName, { teacherName = it }, stringResource(R.string.setup_name), Icons.Filled.Person)
         KidTextField(className, { className = it }, stringResource(R.string.setup_class_name), drawableIcon(R.drawable.ic_school))
+        CodeField(schoolCode, { schoolCode = it }, stringResource(R.string.setup_school_code_optional))
+        Text(stringResource(R.string.setup_school_code_hint), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
         ErrorText(cvm.error)
         BigButton(
             text = stringResource(if (cvm.busy) R.string.setup_working else R.string.setup_create_button),
-            onClick = { cvm.createClass(className, teacherName, onDone) },
+            onClick = { cvm.createClass(className, teacherName, schoolCode, onDone) },
             enabled = !cvm.busy && teacherName.isNotBlank() && className.isNotBlank(),
+        )
+    }
+}
+
+@Composable
+private fun SchoolChoices(goTo: (SetupStep) -> Unit) {
+    ChoiceCard(
+        drawableIcon(R.drawable.ic_school), Chalk, ChalkLight,
+        R.string.setup_create_school_title, R.string.setup_create_school_subtitle,
+    ) { goTo(SetupStep.CREATE_SCHOOL) }
+    ChoiceCard(
+        Icons.Filled.Person, Ink, PencilLight,
+        R.string.setup_admin_join_title, R.string.setup_admin_join_subtitle,
+    ) { goTo(SetupStep.ADMIN_JOIN) }
+}
+
+@Composable
+private fun CreateSchoolForm(cvm: ClassViewModel, onDone: () -> Unit) {
+    var adminName by rememberSaveable { mutableStateOf(cvm.knownTeacherName) }
+    var schoolName by rememberSaveable { mutableStateOf("") }
+    Panel {
+        KidTextField(adminName, { adminName = it }, stringResource(R.string.setup_name), Icons.Filled.Person)
+        KidTextField(
+            schoolName,
+            { schoolName = it },
+            stringResource(R.string.setup_school_name),
+            drawableIcon(R.drawable.ic_school),
+            maxLength = 60,
+        )
+        Text(stringResource(R.string.setup_create_school_hint), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+        ErrorText(cvm.error)
+        BigButton(
+            text = stringResource(if (cvm.busy) R.string.setup_working else R.string.setup_create_school_button),
+            onClick = { cvm.createSchool(schoolName, adminName, onDone) },
+            enabled = !cvm.busy && adminName.isNotBlank() && schoolName.isNotBlank(),
         )
     }
 }
