@@ -181,6 +181,8 @@ internal fun ReceivedCard(
     onOpen: () -> Unit,
     onCopy: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Which class it came from, when the device is in several classes. */
+    classLabel: String? = null,
 ) {
     val context = LocalContext.current
     val time = remember(message.timestamp) { DateFormat.getTimeFormat(context).format(Date(message.timestamp)) }
@@ -195,7 +197,7 @@ internal fun ReceivedCard(
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "$sender · $time",
+                    listOfNotNull(classLabel, sender, time).joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
                     color = InkSoft,
                     modifier = Modifier.weight(1f),

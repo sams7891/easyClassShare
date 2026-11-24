@@ -1,6 +1,10 @@
 package com.easyclassshare.app.ui
 
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,12 +17,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.R
 import com.easyclassshare.app.data.LinkUtils
 import com.easyclassshare.app.data.ShareMessage
@@ -26,6 +35,7 @@ import com.easyclassshare.app.ui.components.Notice
 import com.easyclassshare.app.ui.components.SoftButton
 import com.easyclassshare.app.ui.components.Tone
 import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.Chalk
 import com.easyclassshare.app.ui.theme.InkSoft
 
 /** Single-line field for names and codes. */
@@ -116,6 +126,40 @@ internal fun PasteClearRow(draft: String, onDraftChange: (String) -> Unit) {
             modifier = Modifier.weight(1f),
             icon = Icons.Filled.Clear,
             enabled = draft.isNotEmpty(),
+        )
+    }
+}
+
+/** A join code in large letters with a Copy button. Tapping the code copies it too. */
+@Composable
+internal fun CopyableCode(code: String?) {
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    val copiedText = stringResource(R.string.copied)
+    val copy = {
+        if (code != null) {
+            clipboard.setText(AnnotatedString(code))
+            Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            code ?: "…",
+            fontSize = 34.sp,
+            letterSpacing = 4.sp,
+            fontFamily = FontFamily.Monospace,
+            color = Chalk,
+            maxLines = 1,
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .clickable(enabled = code != null, onClick = copy),
+        )
+        Spacer(Modifier.width(12.dp))
+        SoftButton(
+            stringResource(R.string.copy),
+            onClick = copy,
+            icon = drawableIcon(R.drawable.ic_copy),
+            enabled = code != null,
         )
     }
 }

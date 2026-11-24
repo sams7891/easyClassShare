@@ -8,6 +8,8 @@ Who is who:
   student tablet       classes/{cid}/devices/{uid} exists
   school admin         schools/{sid}/admins/{uid} exists; has teacher rights in every class
                        whose info/school is {sid}
+  super admin          superAdmins/{uid} is true; admin of every school and teacher of every class.
+                       Only added by hand in the Firebase console (the app can't write it).
 """
 import json
 import os
@@ -24,12 +26,15 @@ def new_cls(cid, up):
     return "newData" + ".parent()" * up + f".child('classes').child({cid})"
 
 
+SUPER = "root.child('superAdmins').child(auth.uid).val() === true"
+
+
 def is_teacher(cid):
     return f"{cls(cid)}.child('teachers').child(auth.uid).exists()"
 
 
 def is_school_admin(sid):
-    return f"root.child('schools').child({sid}).child('admins').child(auth.uid).exists()"
+    return f"({SUPER} || root.child('schools').child({sid}).child('admins').child(auth.uid).exists())"
 
 
 def is_class_admin(cid):
@@ -38,8 +43,8 @@ def is_class_admin(cid):
 
 
 def can_teach(cid):
-    """Teacher of the class, or admin of the class's school."""
-    return f"({is_teacher(cid)} || {is_class_admin(cid)})"
+    """Teacher of the class, admin of the class's school, or the super admin."""
+    return f"({SUPER} || {is_teacher(cid)} || {is_class_admin(cid)})"
 
 
 def is_device(cid):
@@ -267,6 +272,7 @@ creating_school = all_of(
 )
 
 schools = {
+    ".read": all_of(AUTH, SUPER),
     "$sid": {
         "info": {
             ".read": all_of(AUTH, SA),
@@ -332,6 +338,9 @@ rules = {
         "classes": classes,
         "schoolSecrets": school_secrets,
         "schools": schools,
+        "superAdmins": {
+            "$uid": {".read": all_of(AUTH, "auth.uid === $uid")},
+        },
     },
 }
 

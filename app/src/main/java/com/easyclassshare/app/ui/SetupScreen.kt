@@ -64,11 +64,28 @@ private enum class SetupStep { CHOOSE, STUDENT, TEACHER, CREATE, TEACHER_JOIN, A
 /**
  * One-time setup: put this device into an online class as a student or a teacher,
  * or into a school as its admin.
- * With [addingClass] a teacher or admin who already has classes adds another class or school.
+ * [mode] says whether this is the first setup or adding one more class or school.
  */
+/** Where the setup starts. */
+enum class SetupMode {
+    /** First setup of this device. */
+    NEW,
+
+    /** A teacher or admin adds another class or school. */
+    ADD_STAFF,
+
+    /** A student device joins one more class. */
+    ADD_STUDENT,
+}
+
 @Composable
-fun SetupScreen(cvm: ClassViewModel, addingClass: Boolean, onBack: () -> Unit, onDone: () -> Unit) {
-    val firstStep = if (addingClass) SetupStep.TEACHER else SetupStep.CHOOSE
+fun SetupScreen(cvm: ClassViewModel, mode: SetupMode, onBack: () -> Unit, onDone: () -> Unit) {
+    val addingClass = mode == SetupMode.ADD_STAFF
+    val firstStep = when (mode) {
+        SetupMode.NEW -> SetupStep.CHOOSE
+        SetupMode.ADD_STAFF -> SetupStep.TEACHER
+        SetupMode.ADD_STUDENT -> SetupStep.STUDENT
+    }
     var step by rememberSaveable { mutableStateOf(firstStep) }
     val back: () -> Unit = {
         cvm.clearError()
@@ -84,7 +101,13 @@ fun SetupScreen(cvm: ClassViewModel, addingClass: Boolean, onBack: () -> Unit, o
     }
     BackHandler(onBack = back)
 
-    val title = stringResource(if (addingClass) R.string.setup_add_class_title else R.string.setup_title)
+    val title = stringResource(
+        when (mode) {
+            SetupMode.NEW -> R.string.setup_title
+            SetupMode.ADD_STAFF -> R.string.setup_add_class_title
+            SetupMode.ADD_STUDENT -> R.string.student_join_another
+        },
+    )
     Scaffold(topBar = { AppTopBar(title, back) }) { padding ->
         Box(
             Modifier
@@ -145,7 +168,7 @@ fun SetupScreen(cvm: ClassViewModel, addingClass: Boolean, onBack: () -> Unit, o
 @Composable
 private fun JoinForm(cvm: ClassViewModel, role: Role, onDone: () -> Unit) {
     val isStudent = role == Role.STUDENT
-    var name by rememberSaveable { mutableStateOf(if (isStudent) "" else cvm.knownTeacherName) }
+    var name by rememberSaveable { mutableStateOf(if (isStudent) cvm.knownStudentName else cvm.knownTeacherName) }
     var code by rememberSaveable { mutableStateOf("") }
     Panel {
         KidTextField(

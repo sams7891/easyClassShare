@@ -29,8 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Face
@@ -77,15 +75,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.ClassViewModel
 import com.easyclassshare.app.R
 import com.easyclassshare.app.online.DeviceInfo
-import com.easyclassshare.app.online.Membership
-import com.easyclassshare.app.online.Role
+import com.easyclassshare.app.online.Recipients
 import com.easyclassshare.app.online.SentMessage
 import com.easyclassshare.app.online.SoundSettings
 import com.easyclassshare.app.ui.components.AppTopBar
@@ -108,66 +103,54 @@ import java.util.Date
 private val MUTE_MINUTES = listOf(10, 20, 30, 45, 60)
 
 /**
- * A teacher's class: sound and "Eyes on me" at the top, then sharing and the tablet list.
- * A school admin sees the same screen for any class of the school, with [onBack] to the school.
+ * A teacher's class: sound and "Eyes on me" at the top, then sharing and the device list.
+ * School admins and the super admin see the same screen for any class of a school.
  */
 @Composable
 fun TeacherClassScreen(
     cvm: ClassViewModel,
     onSettings: () -> Unit,
-    onAddClass: () -> Unit,
     onWifiMode: () -> Unit,
-    onBack: (() -> Unit)? = null,
+    onBack: () -> Unit,
 ) {
     val membership by cvm.current.collectAsState()
-    val memberships by cvm.memberships.collectAsState()
     val className by cvm.className.collectAsState()
     val sound by cvm.sound.collectAsState()
     val devices by cvm.devices.collectAsState()
     val attention by cvm.attention.collectAsState()
     val offset by cvm.serverOffset.collectAsState()
     val now = rememberServerNow(offset)
-    var showClasses by remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val attentionText = stringResource(R.string.attention_default_text)
 
     val title = className ?: membership?.className?.ifBlank { null } ?: stringResource(R.string.class_default_name)
+    val online = stringResource(R.string.teacher_devices_summary, devices.count { it.online }, devices.size)
+    val school = membership?.schoolName.orEmpty()
     Scaffold(
         topBar = {
-            Box {
-                AppTopBar(
-                    title = title,
-                    onBack = onBack,
-                    subtitle = stringResource(R.string.teacher_devices_summary, devices.count { it.online }, devices.size),
-                    onTitleClick = if (onBack == null) ({ showClasses = true }) else null,
-                    actions = {
-                        IconButton(onClick = onSettings) {
-                            Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.class_settings))
+            AppTopBar(
+                title = title,
+                onBack = onBack,
+                subtitle = if (school.isEmpty()) online else "$school · $online",
+                actions = {
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.class_settings))
+                    }
+                    Box {
+                        IconButton(onClick = { showMore = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
                         }
-                        Box {
-                            IconButton(onClick = { showMore = true }) {
-                                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
-                            }
-                            DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.teacher_wifi_mode)) },
-                                    leadingIcon = { Icon(drawableIcon(R.drawable.ic_wifi), contentDescription = null) },
-                                    onClick = { showMore = false; onWifiMode() },
-                                )
-                            }
+                        DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.teacher_wifi_mode)) },
+                                leadingIcon = { Icon(drawableIcon(R.drawable.ic_wifi), contentDescription = null) },
+                                onClick = { showMore = false; onWifiMode() },
+                            )
                         }
-                    },
-                )
-                ClassMenu(
-                    expanded = showClasses,
-                    classes = memberships,
-                    activeClassId = membership?.classId,
-                    onDismiss = { showClasses = false },
-                    onPick = { showClasses = false; tab = 0; cvm.switchClass(it) },
-                    onAdd = { showClasses = false; onAddClass() },
-                )
-            }
+                    }
+                },
+            )
         },
     ) { padding ->
         Column(
@@ -218,7 +201,7 @@ fun TeacherClassScreen(
                     sound = sound,
                     now = now,
                     onSendTo = { uid ->
-                        cvm.updateRecipients(setOf(uid))
+                        cvm.updateRecipients(Recipients.Selected(setOf(uid)))
                         tab = 0
                     },
                 )
@@ -378,6 +361,7 @@ private fun ShareTab(cvm: ClassViewModel, devices: List<DeviceInfo>) {
     }
 
     val recipients = cvm.recipients
+    val onlineCount = devices.count { it.online }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -403,7 +387,7 @@ private fun ShareTab(cvm: ClassViewModel, devices: List<DeviceInfo>) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                audienceText(recipients, names),
+                                recipientsText(recipients, names, onlineCount),
                                 style = MaterialTheme.typography.bodyLarge,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -418,8 +402,11 @@ private fun ShareTab(cvm: ClassViewModel, devices: List<DeviceInfo>) {
                 BigButton(
                     text = when {
                         cvm.sending -> stringResource(R.string.sending)
-                        recipients == null -> stringResource(R.string.send_to_class)
-                        else -> pluralStringResource(R.plurals.send_to_tablets, recipients.size, recipients.size)
+                        recipients is Recipients.Selected ->
+                            pluralStringResource(R.plurals.send_to_tablets, recipients.uids.size, recipients.uids.size)
+                        recipients == Recipients.OnlineOnly ->
+                            pluralStringResource(R.plurals.send_to_online, onlineCount, onlineCount)
+                        else -> stringResource(R.string.send_to_class)
                     },
                     onClick = cvm::send,
                     icon = Icons.AutoMirrored.Filled.Send,
@@ -480,6 +467,14 @@ private fun ShareTab(cvm: ClassViewModel, devices: List<DeviceInfo>) {
         )
     }
 }
+
+@Composable
+private fun recipientsText(recipients: Recipients, names: Map<String, String>, onlineCount: Int): String =
+    when (recipients) {
+        Recipients.Everyone -> stringResource(R.string.audience_class)
+        Recipients.OnlineOnly -> stringResource(R.string.audience_online, onlineCount)
+        is Recipients.Selected -> audienceText(recipients.uids, names)
+    }
 
 @Composable
 private fun audienceText(targets: Set<String>?, names: Map<String, String>): String = when {
@@ -586,34 +581,32 @@ private fun SentCard(
     }
 }
 
-/** Pick the whole class or some tablets. */
+/** Pick the whole class, only the online devices, or some devices. */
 @Composable
 private fun RecipientDialog(
     devices: List<DeviceInfo>,
-    initial: Set<String>?,
+    initial: Recipients,
     onDismiss: () -> Unit,
-    onDone: (Set<String>?) -> Unit,
+    onDone: (Recipients) -> Unit,
 ) {
-    var selected by remember { mutableStateOf(initial.orEmpty()) }
+    var choice by remember { mutableStateOf(initial) }
+    val selected = (choice as? Recipients.Selected)?.uids.orEmpty()
+    val onlineCount = devices.count { it.online }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.recipients_title)) },
         text = {
-            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { selected = emptySet() }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(
-                        selected = selected.isEmpty(),
-                        onClick = { selected = emptySet() },
-                        colors = RadioButtonDefaults.colors(selectedColor = Chalk),
-                    )
-                    Text(stringResource(R.string.audience_class), style = MaterialTheme.typography.titleMedium)
-                }
+            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
+                ChoiceRow(
+                    text = stringResource(R.string.audience_class),
+                    selected = choice == Recipients.Everyone,
+                    onClick = { choice = Recipients.Everyone },
+                )
+                ChoiceRow(
+                    text = stringResource(R.string.audience_online, onlineCount),
+                    selected = choice == Recipients.OnlineOnly,
+                    onClick = { choice = Recipients.OnlineOnly },
+                )
                 if (devices.isNotEmpty()) {
                     HorizontalDivider(color = Line, modifier = Modifier.padding(vertical = 4.dp))
                     Text(
@@ -625,7 +618,10 @@ private fun RecipientDialog(
                 }
                 for (device in devices) {
                     val checked = device.uid in selected
-                    val toggle = { selected = if (checked) selected - device.uid else selected + device.uid }
+                    val toggle = {
+                        val uids = if (checked) selected - device.uid else selected + device.uid
+                        choice = if (uids.isEmpty()) Recipients.Everyone else Recipients.Selected(uids)
+                    }
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -645,14 +641,30 @@ private fun RecipientDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onDone(selected.takeIf { it.isNotEmpty() }) }) {
-                Text(stringResource(R.string.done_button))
-            }
+            TextButton(onClick = { onDone(choice) }) { Text(stringResource(R.string.done_button)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
+}
+
+@Composable
+private fun ChoiceRow(text: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onClick,
+            colors = RadioButtonDefaults.colors(selectedColor = Chalk),
+        )
+        Text(text, style = MaterialTheme.typography.titleMedium)
+    }
 }
 
 // ---------------------------------------------------------------- Tablets tab
@@ -683,13 +695,7 @@ private fun TabletsTab(
                 Panel {
                     Text(stringResource(R.string.tablets_empty_title), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.tablets_empty_text), style = MaterialTheme.typography.bodyLarge, color = InkSoft)
-                    Text(
-                        codes?.studentCode ?: "…",
-                        fontSize = 36.sp,
-                        letterSpacing = 4.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = Chalk,
-                    )
+                    CopyableCode(codes?.studentCode)
                 }
             }
         } else {
@@ -893,55 +899,5 @@ private fun TabletRow(
                 }
             }
         }
-    }
-}
-
-// ---------------------------------------------------------------- class switcher
-
-/** Drop-down list of the device's classes and schools, plus "Add a class". */
-@Composable
-internal fun ClassMenu(
-    expanded: Boolean,
-    classes: List<Membership>,
-    activeClassId: String?,
-    onDismiss: () -> Unit,
-    onPick: (String) -> Unit,
-    onAdd: () -> Unit,
-) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        Text(
-            stringResource(R.string.classes_title),
-            style = MaterialTheme.typography.bodyMedium,
-            color = InkSoft,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-        for (m in classes) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        m.className.ifBlank { stringResource(R.string.class_default_name) },
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                },
-                leadingIcon = {
-                    when {
-                        m.classId == activeClassId -> Icon(Icons.Filled.Check, contentDescription = null, tint = Chalk)
-                        m.role == Role.ADMIN -> Icon(drawableIcon(R.drawable.ic_school), contentDescription = null, tint = InkSoft)
-                    }
-                },
-                trailingIcon = if (m.role == Role.ADMIN) {
-                    { Text(stringResource(R.string.school_tag), style = MaterialTheme.typography.bodyMedium, color = InkSoft) }
-                } else {
-                    null
-                },
-                onClick = { onPick(m.classId) },
-            )
-        }
-        HorizontalDivider()
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.classes_add), style = MaterialTheme.typography.titleMedium) },
-            leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
-            onClick = onAdd,
-        )
     }
 }

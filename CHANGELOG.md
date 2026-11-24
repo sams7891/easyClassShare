@@ -36,6 +36,17 @@ project uses [Semantic Versioning](https://semver.org/).
   rights, without being one of its teachers. Teachers add a class to a school
   with the school code when creating it; admins can also create classes.
 
+- **Start screen** for teachers and admins listing all their schools and
+  classes; teachers and admins can be in several schools.
+- Student devices can be in **several classes** with one shared inbox.
+- **Send to online devices only.**
+- **Copy** buttons for all codes.
+- **Super admin**: one device (set in the Firebase console) sees and manages
+  every school.
+
+### Removed
+- The chime when a message arrives while the app is open.
+
 ### Fixed
 - Muting the class no longer disabled the send button and showed "Sending…".
 

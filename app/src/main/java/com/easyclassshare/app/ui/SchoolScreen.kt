@@ -72,56 +72,47 @@ private sealed interface SchoolConfirm {
     data object Leave : SchoolConfirm
 }
 
-/** A school admin's home: every class of the school, the school codes and the admins. */
+/** A school admin's view of a school: every class, the school codes and the admins. */
 @Composable
 fun SchoolScreen(
     cvm: ClassViewModel,
     onOpenClass: (SchoolClass) -> Unit,
-    onAddClassOrSchool: () -> Unit,
+    onBack: () -> Unit,
     onWifiMode: () -> Unit,
 ) {
-    val membership by cvm.membership.collectAsState()
-    val memberships by cvm.memberships.collectAsState()
+    val school by cvm.openSchool.collectAsState()
     val schoolName by cvm.schoolName.collectAsState()
     val classes by cvm.schoolClasses.collectAsState()
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    var showSwitcher by remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
     var newClass by remember { mutableStateOf(false) }
 
-    val title = schoolName ?: membership?.className?.ifBlank { null } ?: stringResource(R.string.school_default_name)
+    val title = schoolName ?: school?.name?.ifBlank { null } ?: stringResource(R.string.school_default_name)
+    val subtitle = stringResource(
+        if (school?.asSuperAdmin == true) R.string.school_subtitle_super else R.string.school_subtitle,
+        classes.size,
+    )
     Scaffold(
         topBar = {
-            Box {
-                AppTopBar(
-                    title = title,
-                    onBack = null,
-                    subtitle = stringResource(R.string.school_subtitle, classes.size),
-                    onTitleClick = { showSwitcher = true },
-                    actions = {
-                        Box {
-                            IconButton(onClick = { showMore = true }) {
-                                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
-                            }
-                            DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.teacher_wifi_mode)) },
-                                    leadingIcon = { Icon(drawableIcon(R.drawable.ic_wifi), contentDescription = null) },
-                                    onClick = { showMore = false; onWifiMode() },
-                                )
-                            }
+            AppTopBar(
+                title = title,
+                onBack = onBack,
+                subtitle = subtitle,
+                actions = {
+                    Box {
+                        IconButton(onClick = { showMore = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
                         }
-                    },
-                )
-                ClassMenu(
-                    expanded = showSwitcher,
-                    classes = memberships,
-                    activeClassId = membership?.classId,
-                    onDismiss = { showSwitcher = false },
-                    onPick = { showSwitcher = false; tab = 0; cvm.switchClass(it) },
-                    onAdd = { showSwitcher = false; onAddClassOrSchool() },
-                )
-            }
+                        DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.teacher_wifi_mode)) },
+                                leadingIcon = { Icon(drawableIcon(R.drawable.ic_wifi), contentDescription = null) },
+                                onClick = { showMore = false; onWifiMode() },
+                            )
+                        }
+                    }
+                },
+            )
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -196,10 +187,11 @@ private fun ClassesTab(
                 Panel {
                     Text(stringResource(R.string.school_no_classes_title), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        stringResource(R.string.school_no_classes_text, codes?.schoolCode ?: "…"),
+                        stringResource(R.string.school_no_classes_text),
                         style = MaterialTheme.typography.bodyLarge,
                         color = InkSoft,
                     )
+                    CopyableCode(codes?.schoolCode)
                 }
             }
         }
@@ -300,7 +292,7 @@ private fun SchoolSettingsTab(cvm: ClassViewModel) {
                     when (pending) {
                         is SchoolConfirm.RenewCode -> cvm.renewSchoolCode(pending.kind)
                         is SchoolConfirm.RemoveAdmin -> cvm.removeAdmin(pending.admin.uid)
-                        SchoolConfirm.Leave -> cvm.leave()
+                        SchoolConfirm.Leave -> cvm.leaveOpenSchool()
                     }
                     confirm = null
                 }) { Text(stringResource(R.string.yes_button)) }

@@ -50,8 +50,26 @@ devices, codes, teachers).
 4. The admin's home screen lists all classes; tap one to open it. School
    codes and admins are in **School settings**.
 
-A device can be in several classes and schools at once; switch with the name
-at the top.
+Teachers and admins can be in several classes and schools at once. The app
+opens on a **start screen** listing their schools and their classes (grouped by
+school); tap one to open it.
+
+A **student device** can also be in several classes (**Join another class** at
+the bottom of its inbox). It shows one inbox for all classes, is muted while
+*any* of its classes has sound off, and shows "Eyes on me" from any class.
+
+### Super admin (the app's owner)
+The super admin sees **every school** on the start screen and has admin rights
+in all of them. Only someone with access to the Firebase console can make a
+device super admin:
+
+1. In the app on that device: start screen → **⋮ → Device ID** → **Copy**.
+2. Firebase console → **Realtime Database → Data**: add a child `superAdmins`
+   at the top level, and inside it a child whose **key is the device ID** and
+   whose **value is `true`**.
+3. Reopen the app. *All schools (super admin)* appears on the start screen.
+
+Remove the entry to take the rights away again.
 
 ### In class
 The teacher screen has two status tiles at the top and two tabs:
@@ -62,8 +80,8 @@ The teacher screen has two status tiles at the top and two tabs:
   tap again to end it. Over other apps this needs the device's *Display over
   other apps* permission (the student screen asks for it once; the Devices tab
   shows which devices haven't allowed it yet).
-- **Share** tab: type or paste a link, choose **To: Whole class** or single
-  devices, and send. Every shared item shows **"Opened by 18 of 24"**; tap it
+- **Share** tab: type or paste a link, choose **To: Whole class**, **Online
+  devices only**, or single devices, and send. Every shared item shows **"Opened by 18 of 24"**; tap it
   to see who hasn't opened it yet. Shared items can be deleted from all devices.
 - **Devices** tab: every device with online / last seen, battery level, and its
   own sound switch. The ⋮ menu renames a device, sends something only to that

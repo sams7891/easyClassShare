@@ -11,7 +11,7 @@ class EasyClassShareApplication : Application() {
         LocalSetup.init(this)
         ClassRepository.init(this)
         // If the tablet left its class while muted (e.g. the app was updated), give the sound back.
-        if (LocalSetup.membership.value == null) SoundEnforcer(this).restore()
+        if (!LocalSetup.isStudentDevice) SoundEnforcer(this).restore()
     }
 }
 

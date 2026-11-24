@@ -29,9 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.easyclassshare.app.ClassViewModel
 import com.easyclassshare.app.R
 import com.easyclassshare.app.online.Role
@@ -40,7 +38,6 @@ import com.easyclassshare.app.ui.components.AppTopBar
 import com.easyclassshare.app.ui.components.Panel
 import com.easyclassshare.app.ui.components.SoftButton
 import com.easyclassshare.app.ui.theme.Brick
-import com.easyclassshare.app.ui.theme.Chalk
 import com.easyclassshare.app.ui.theme.InkSoft
 import com.easyclassshare.app.ui.theme.Line
 
@@ -133,7 +130,7 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
                 TextButton(onClick = {
                     when (pending) {
                         is Confirm.RemoveTeacher -> cvm.removeTeacher(pending.teacher.uid)
-                        Confirm.LeaveClass -> cvm.leave()
+                        Confirm.LeaveClass -> cvm.leaveOpenClass()
                         is Confirm.RenewCode -> cvm.renewCode(pending.role)
                     }
                     confirm = null
@@ -150,13 +147,7 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
 internal fun CodeBlock(title: String, hint: String, code: String?, enabled: Boolean, onRenew: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
-        Text(
-            code ?: "…",
-            fontSize = 36.sp,
-            letterSpacing = 4.sp,
-            fontFamily = FontFamily.Monospace,
-            color = Chalk,
-        )
+        CopyableCode(code)
         Text(hint, style = MaterialTheme.typography.bodyMedium, color = InkSoft)
         Row {
             SoftButton(stringResource(R.string.manage_new_code), onRenew, icon = Icons.Filled.Refresh, enabled = enabled && code != null)

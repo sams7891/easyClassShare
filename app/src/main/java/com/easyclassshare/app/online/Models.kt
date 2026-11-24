@@ -1,6 +1,7 @@
 package com.easyclassshare.app.online
 
 import com.easyclassshare.app.data.LinkUtils
+import com.easyclassshare.app.data.ShareMessage
 import java.security.SecureRandom
 
 /** [ADMIN] is a school admin: teacher rights in every class of the school. */
@@ -18,7 +19,29 @@ data class Membership(
     val name: String,
     /** Last known class (or school) name, so lists show names even before going online. */
     val className: String = "",
+    /** For a class: the name of the school it belongs to, if any. */
+    val schoolName: String = "",
 )
+
+/** A school shown on the start screen or opened by an admin. */
+data class SchoolRef(
+    val schoolId: String,
+    val name: String,
+    /** Opened by the super admin, who isn't one of the school's admins. */
+    val asSuperAdmin: Boolean = false,
+    val classCount: Int = 0,
+)
+
+/** A message in a student device's inbox, with the class it came from. */
+data class InboxMessage(val classId: String, val className: String, val message: ShareMessage)
+
+/** Who a teacher's next message goes to. */
+sealed interface Recipients {
+    data object Everyone : Recipients
+    /** Only the devices that are online when sending. */
+    data object OnlineOnly : Recipients
+    data class Selected(val uids: Set<String>) : Recipients
+}
 
 /** What a join code is for. */
 enum class CodeKind { STUDENT, TEACHER, ADMIN, SCHOOL }

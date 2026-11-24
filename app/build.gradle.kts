@@ -53,8 +53,8 @@ android {
         minSdk = 26
         targetSdk = 34
         // Bump both of these for every release (see CHANGELOG.md).
-        versionCode = 8
-        versionName = "1.3.0-beta.5"
+        versionCode = 9
+        versionName = "1.3.0-beta.6"
 
         buildConfigField("String", "FIREBASE_API_KEY", "\"${firebaseConfig["apiKey"].orEmpty()}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${firebaseConfig["appId"].orEmpty()}\"")

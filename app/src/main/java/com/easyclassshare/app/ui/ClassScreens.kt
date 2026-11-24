@@ -20,12 +20,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -65,22 +67,22 @@ import com.easyclassshare.app.ui.theme.Ink
 import com.easyclassshare.app.ui.theme.InkSoft
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-/** What a student tablet shows after the one-time setup: the class inbox. */
+/** What a student device shows after the one-time setup: one inbox for all its classes. */
 @Composable
-fun StudentClassScreen(cvm: ClassViewModel) {
+fun StudentClassScreen(cvm: ClassViewModel, onJoinAnother: () -> Unit) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
-    val membership by cvm.membership.collectAsState()
-    val className by cvm.className.collectAsState()
+    val classes by cvm.studentClasses.collectAsState()
     val myName by cvm.myDeviceName.collectAsState()
-    val messages by cvm.messages.collectAsState()
+    val inbox by cvm.inbox.collectAsState()
     val soundAllowed by cvm.mySoundAllowed.collectAsState()
-    val attention by cvm.attention.collectAsState()
+    val attention by cvm.studentAttention.collectAsState()
     val listState = rememberLazyListState()
     val copiedText = stringResource(R.string.copied)
     val openFailedText = stringResource(R.string.could_not_open)
     var showLeave by rememberSaveable { mutableStateOf(false) }
     var canLock by remember { mutableStateOf(AttentionOverlay.canShow(context)) }
+    val severalClasses = classes.size > 1
 
     // Checked again when coming back from the "Display over other apps" settings page.
     LifecycleResumeEffect(Unit) {
@@ -99,22 +101,31 @@ fun StudentClassScreen(cvm: ClassViewModel) {
         }
     }
 
-    LaunchedEffect(messages.firstOrNull()?.id) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(0)
+    LaunchedEffect(inbox.firstOrNull()?.message?.id) {
+        if (inbox.isNotEmpty()) listState.animateScrollToItem(0)
     }
 
     // A text message counts as seen once it has been on screen.
-    LaunchedEffect(listState, messages) {
+    LaunchedEffect(listState, inbox) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.map { it.key } }
             .distinctUntilChanged()
             .collect { keys ->
-                messages.filter { !it.isLink && it.id in keys }.forEach { cvm.markOpened(it.id) }
+                inbox.filter { !it.message.isLink && itemKey(it.classId, it.message.id) in keys }
+                    .forEach { cvm.markOpened(it.classId, it.message.id) }
             }
     }
 
-    val title = className ?: membership?.className?.ifBlank { null } ?: stringResource(R.string.class_default_name)
+    val title = when {
+        severalClasses -> stringResource(R.string.student_classes_title)
+        else -> classes.firstOrNull()?.className?.ifBlank { null } ?: stringResource(R.string.class_default_name)
+    }
+    val subtitle = if (severalClasses) {
+        classes.joinToString(", ") { it.className.ifBlank { "…" } }
+    } else {
+        myName ?: classes.firstOrNull()?.name
+    }
     Box(Modifier.fillMaxSize()) {
-        Scaffold(topBar = { AppTopBar(title, onBack = null, subtitle = myName ?: membership?.name) }) { padding ->
+        Scaffold(topBar = { AppTopBar(title, onBack = null, subtitle = subtitle) }) { padding ->
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -129,43 +140,18 @@ fun StudentClassScreen(cvm: ClassViewModel) {
                     }
                 }
                 if (!canLock) {
-                    item(key = "lock") {
-                        Panel {
-                            Text(stringResource(R.string.lock_permission_title), style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                stringResource(R.string.lock_permission_text),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = InkSoft,
-                            )
-                            Row {
-                                SoftButton(
-                                    stringResource(R.string.lock_permission_button),
-                                    onClick = {
-                                        val intent = Intent(
-                                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                            Uri.parse("package:${context.packageName}"),
-                                        )
-                                        try {
-                                            context.startActivity(intent)
-                                        } catch (e: ActivityNotFoundException) {
-                                            context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-                                        }
-                                    },
-                                    icon = drawableIcon(R.drawable.ic_eye),
-                                )
-                            }
-                        }
-                    }
+                    item(key = "lock") { LockPermissionPanel() }
                 }
-                if (messages.isEmpty()) {
+                if (inbox.isEmpty()) {
                     item(key = "empty") { EmptyInbox() }
                 } else {
-                    itemsIndexed(messages, key = { _, m -> m.id }) { index, message ->
+                    itemsIndexed(inbox, key = { _, m -> itemKey(m.classId, m.message.id) }) { index, entry ->
+                        val message = entry.message
                         ReceivedCard(
                             message = message,
                             isNewest = index == 0,
                             onOpen = {
-                                cvm.markOpened(message.id)
+                                cvm.markOpened(entry.classId, message.id)
                                 openLink(context, message.content, openFailedText)
                             },
                             onCopy = {
@@ -173,12 +159,18 @@ fun StudentClassScreen(cvm: ClassViewModel) {
                                 Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
                             },
                             modifier = Modifier.animateItem(),
+                            classLabel = if (severalClasses) entry.className.ifBlank { null } else null,
                         )
                     }
                 }
-                item(key = "leave") {
-                    TextButton(onClick = { cvm.clearError(); showLeave = true }) {
-                        Text(stringResource(R.string.student_leave), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+                item(key = "actions") {
+                    Row {
+                        TextButton(onClick = { cvm.clearError(); onJoinAnother() }) {
+                            Text(stringResource(R.string.student_join_another), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+                        }
+                        TextButton(onClick = { cvm.clearError(); showLeave = true }) {
+                            Text(stringResource(R.string.student_leave), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+                        }
                     }
                 }
             }
@@ -190,18 +182,34 @@ fun StudentClassScreen(cvm: ClassViewModel) {
 
     if (showLeave && attention == null) {
         var code by rememberSaveable { mutableStateOf("") }
+        var classId by rememberSaveable { mutableStateOf(classes.singleOrNull()?.classId) }
         AlertDialog(
             onDismissRequest = { showLeave = false },
             title = { Text(stringResource(R.string.student_leave_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (severalClasses) {
+                        Text(stringResource(R.string.student_leave_which))
+                        for (m in classes) {
+                            Row(
+                                Modifier.fillMaxWidth().clickable { classId = m.classId },
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(selected = classId == m.classId, onClick = { classId = m.classId })
+                                Text(m.className.ifBlank { stringResource(R.string.class_default_name) })
+                            }
+                        }
+                    }
                     Text(stringResource(R.string.student_leave_text))
                     CodeField(code, { code = it }, stringResource(R.string.setup_teacher_code))
                     ErrorText(cvm.error)
                 }
             },
             confirmButton = {
-                TextButton(onClick = { cvm.leave(code) }, enabled = !cvm.busy && code.isNotBlank()) {
+                TextButton(
+                    onClick = { classId?.let { cvm.leaveStudentClass(it, code) { showLeave = false } } },
+                    enabled = !cvm.busy && code.isNotBlank() && classId != null,
+                ) {
                     Text(stringResource(R.string.leave_button), color = Brick)
                 }
             },
@@ -209,6 +217,38 @@ fun StudentClassScreen(cvm: ClassViewModel) {
                 TextButton(onClick = { showLeave = false }) { Text(stringResource(R.string.cancel)) }
             },
         )
+    }
+}
+
+private fun itemKey(classId: String, messageId: String) = "$classId/$messageId"
+
+@Composable
+private fun LockPermissionPanel() {
+    val context = LocalContext.current
+    Panel {
+        Text(stringResource(R.string.lock_permission_title), style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(R.string.lock_permission_text),
+            style = MaterialTheme.typography.bodyMedium,
+            color = InkSoft,
+        )
+        Row {
+            SoftButton(
+                stringResource(R.string.lock_permission_button),
+                onClick = {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:${context.packageName}"),
+                    )
+                    try {
+                        context.startActivity(intent)
+                    } catch (e: ActivityNotFoundException) {
+                        context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+                    }
+                },
+                icon = drawableIcon(R.drawable.ic_eye),
+            )
+        }
     }
 }
 

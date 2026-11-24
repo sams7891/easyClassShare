@@ -6,8 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
-import android.media.AudioManager
-import android.media.ToneGenerator
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
@@ -28,8 +26,10 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -41,8 +41,7 @@ class ClassService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var enforcer: SoundEnforcer
     private lateinit var overlay: AttentionOverlay
-    private var tone: ToneGenerator? = null
-    private var classId: String? = null
+    private var classIds: List<String> = emptyList()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -50,7 +49,6 @@ class ClassService : Service() {
         super.onCreate()
         enforcer = SoundEnforcer(this)
         overlay = AttentionOverlay(this)
-        tone = runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80) }.getOrNull()
         Notifications.createChannels(this)
         val notification = Notifications.ongoing(this, soundAllowed = !enforcer.isMuted)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -59,20 +57,23 @@ class ClassService : Service() {
             startForeground(Notifications.ONGOING_ID, notification)
         }
         scope.launch {
-            LocalSetup.membership.collectLatest { membership ->
-                if (membership == null || membership.role != Role.STUDENT) {
-                    enforcer.restore()
-                    stopSelf()
-                } else {
-                    runFor(membership)
+            LocalSetup.memberships
+                .map { list -> list.filter { it.role == Role.STUDENT } }
+                .distinctUntilChanged { old, new -> old.map { it.classId } == new.map { it.classId } }
+                .collectLatest { classes ->
+                    if (classes.isEmpty()) {
+                        enforcer.restore()
+                        stopSelf()
+                    } else {
+                        runFor(classes)
+                    }
                 }
-            }
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Started again each time the app opens: the "Display over other apps" switch may have changed.
-        classId?.let { reportCanLock(it) }
+        classIds.forEach { reportCanLock(it) }
         return START_STICKY
     }
 
@@ -80,20 +81,44 @@ class ClassService : Service() {
         ClassRepository.reportStatus(classId, mapOf("canLock" to AttentionOverlay.canShow(this)))
     }
 
-    private suspend fun runFor(membership: Membership) = coroutineScope {
-        classId = membership.classId
+    /** Keeps the device connected to all its classes at once. */
+    private suspend fun runFor(classes: List<Membership>) = coroutineScope {
+        classIds = classes.map { it.classId }
 
-        launch {
-            ClassRepository.presence(membership.classId).catch { }.collect { reportCanLock(membership.classId) }
-        }
-        launch {
-            batteryStatus().collect { (level, charging) ->
-                ClassRepository.reportStatus(membership.classId, mapOf("battery" to level, "charging" to charging))
+        for (membership in classes) {
+            val classId = membership.classId
+            launch {
+                ClassRepository.presence(classId).catch { }.collect { reportCanLock(classId) }
+            }
+            launch {
+                ClassRepository.isStillMember(membership).catch { }.collect { stillMember ->
+                    if (!stillMember) LocalSetup.markRemoved(membership)
+                }
+            }
+            launch {
+                ClassRepository.messages(classId).catch { }.collect { messages ->
+                    val newest = messages.firstOrNull() ?: return@collect
+                    val lastAnnounced = LocalSetup.lastAnnounced(classId)
+                    LocalSetup.setLastAnnounced(classId, maxOf(lastAnnounced, newest.timestamp))
+                    // The first time, just remember where we are: old messages are not "new".
+                    if (lastAnnounced == 0L || newest.timestamp <= lastAnnounced) return@collect
+                    // While the app is open the message just appears in the inbox.
+                    if (!AppVisibility.isForeground) Notifications.newMessage(this@ClassService, newest, classId)
+                }
             }
         }
         launch {
+            batteryStatus().collect { (level, charging) ->
+                for (classId in classIds) {
+                    ClassRepository.reportStatus(classId, mapOf("battery" to level, "charging" to charging))
+                }
+            }
+        }
+        launch {
+            // "Eyes on me" from any class covers the screen.
+            val perClass = classes.map { ClassRepository.attention(it.classId).catch { emit(null) } }
             try {
-                ClassRepository.attention(membership.classId).catch { }.collect { attention ->
+                combine(perClass) { all -> all.firstOrNull { it != null } }.collect { attention ->
                     if (attention == null) {
                         overlay.hide()
                         Notifications.cancelAttention(this@ClassService)
@@ -108,28 +133,11 @@ class ClassService : Service() {
             }
         }
         launch {
-            ClassRepository.isStillMember(membership).catch { }.collect { stillMember ->
-                if (!stillMember) LocalSetup.markRemoved(membership)
-            }
-        }
-        launch {
-            ClassRepository.soundAllowedForMe(membership.classId).catch { }.collectLatest { allowed ->
+            // Muted if any class has sound off for this device.
+            val perClass = classes.map { ClassRepository.soundAllowedForMe(it.classId).catch { emit(true) } }
+            combine(perClass) { all -> all.all { it } }.distinctUntilChanged().collectLatest { allowed ->
                 Notifications.update(this@ClassService, allowed)
                 if (allowed) enforcer.restore() else keepMuted()
-            }
-        }
-        launch {
-            ClassRepository.messages(membership.classId).catch { }.collect { messages ->
-                val newest = messages.firstOrNull() ?: return@collect
-                val lastAnnounced = LocalSetup.lastAnnouncedMessageTime
-                LocalSetup.lastAnnouncedMessageTime = maxOf(lastAnnounced, newest.timestamp)
-                // The first time, just remember where we are: old messages are not "new".
-                if (lastAnnounced == 0L || newest.timestamp <= lastAnnounced) return@collect
-                if (AppVisibility.isForeground) {
-                    tone?.startTone(ToneGenerator.TONE_PROP_ACK, 150)
-                } else {
-                    Notifications.newMessage(this@ClassService, newest, membership.classId)
-                }
             }
         }
     }
@@ -193,9 +201,9 @@ class ClassService : Service() {
 
     override fun onDestroy() {
         overlay.hide()
-        classId?.let { id -> if (LocalSetup.membership.value?.classId == id) ClassRepository.markOffline(id) }
+        val stillMine = LocalSetup.memberships.value.filter { it.role == Role.STUDENT }.map { it.classId }
+        classIds.filter { it in stillMine }.forEach { ClassRepository.markOffline(it) }
         scope.cancel()
-        tone?.release()
         super.onDestroy()
     }
 

@@ -15,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.easyclassshare.app.data.LinkUtils
 import com.easyclassshare.app.online.LocalSetup
@@ -26,6 +29,8 @@ import com.easyclassshare.app.ui.ManageClassScreen
 import com.easyclassshare.app.ui.ReceiverScreen
 import com.easyclassshare.app.ui.SchoolScreen
 import com.easyclassshare.app.ui.SenderScreen
+import com.easyclassshare.app.ui.SetupMode
+import com.easyclassshare.app.ui.StartScreen
 import com.easyclassshare.app.ui.SetupScreen
 import com.easyclassshare.app.ui.StudentClassScreen
 import com.easyclassshare.app.ui.TeacherClassScreen
@@ -41,7 +46,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Only on a fresh start - not again after a screen rotation.
         if (savedInstanceState == null) {
-            if (LocalSetup.membership.value != null) vm.screen = Screen.CLASS
+            vm.screen = when {
+                LocalSetup.isStudentDevice -> Screen.STUDENT
+                LocalSetup.memberships.value.isNotEmpty() -> Screen.START
+                else -> Screen.HOME
+            }
             handleShareIntent(intent)
             handleOpenMessage(intent)
         }
@@ -53,7 +62,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         AppVisibility.isForeground = true
-        if (LocalSetup.membership.value?.role == Role.STUDENT) ClassService.start(this)
+        if (LocalSetup.isStudentDevice) ClassService.start(this)
     }
 
     override fun onStop() {
@@ -75,7 +84,7 @@ class MainActivity : ComponentActivity() {
         val content = intent.getStringExtra(Notifications.EXTRA_CONTENT).orEmpty()
         // Handle it only once, not again after a rotation.
         intent.action = null
-        if (LocalSetup.membership.value?.classId != classId) return
+        if (LocalSetup.memberships.value.none { it.role == Role.STUDENT && it.classId == classId }) return
         if (LinkUtils.looksLikeLink(content)) {
             ClassViewModel.reportOpened(classId, messageId)
             openLink(this, content, getString(R.string.could_not_open))
@@ -88,13 +97,18 @@ class MainActivity : ComponentActivity() {
         if (intent.type?.startsWith("text/") != true) return
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)?.trim()
         if (text.isNullOrEmpty()) return
-        when (LocalSetup.membership.value?.role) {
-            Role.TEACHER -> {
+        when {
+            LocalSetup.isStudentDevice -> Unit // students can't send
+            cvm.current.value != null -> {
                 cvm.updateDraft(text)
                 vm.screen = Screen.CLASS
             }
-            Role.STUDENT -> Unit // students can't send
-            Role.ADMIN, null -> {
+            LocalSetup.memberships.value.isNotEmpty() -> {
+                // The text waits in the send box until a class is opened.
+                cvm.updateDraft(text)
+                vm.screen = Screen.START
+            }
+            else -> {
                 vm.updateDraft(text)
                 vm.screen = Screen.SEND
             }
@@ -104,34 +118,43 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
-    val membership by cvm.membership.collectAsState()
     val memberships by cvm.memberships.collectAsState()
     val removedFrom by cvm.removedFrom.collectAsState()
-    val adminView by cvm.isAdminView.collectAsState()
-    val home = when (membership?.role) {
-        null -> Screen.HOME
-        Role.ADMIN -> Screen.SCHOOL
-        else -> Screen.CLASS
+    val openClass by cvm.current.collectAsState()
+    val openSchool by cvm.openSchool.collectAsState()
+    val isSuperAdmin by cvm.isSuperAdmin.collectAsState()
+    var setupMode by rememberSaveable { mutableStateOf(SetupMode.NEW) }
+
+    val isStudent = memberships.any { it.role == Role.STUDENT }
+    val isStaff = memberships.any { it.role != Role.STUDENT } || isSuperAdmin
+    val home = when {
+        isStudent -> Screen.STUDENT
+        isStaff -> Screen.START
+        else -> Screen.HOME
     }
     val goHome = { vm.screen = home }
-    val backToClass = { vm.screen = Screen.CLASS }
-    val backToSchool = {
-        cvm.closeSchoolClass()
-        vm.screen = Screen.SCHOOL
+    val goStart = {
+        cvm.closeAll()
+        vm.screen = Screen.START
+    }
+    val backFromClass = { vm.screen = if (cvm.closeClass()) Screen.SCHOOL else Screen.START }
+    val openSetup = { mode: SetupMode ->
+        cvm.clearError()
+        setupMode = mode
+        vm.screen = Screen.SETUP
     }
 
-    // Follow joining/leaving and switching between classes and schools.
-    // Student tablets stay on the class screen.
-    LaunchedEffect(membership, vm.screen, adminView) {
-        val role = membership?.role
+    // Follow joining, leaving and being removed. Student devices stay on their inbox.
+    LaunchedEffect(memberships, vm.screen, openClass, openSchool, isSuperAdmin) {
         val screen = vm.screen
         val target = when {
-            role == null && screen in setOf(Screen.CLASS, Screen.MANAGE, Screen.SCHOOL) -> Screen.HOME
-            role != null && screen == Screen.HOME -> home
-            role == Role.STUDENT && screen != Screen.CLASS -> Screen.CLASS
-            role == Role.TEACHER && screen == Screen.SCHOOL -> Screen.CLASS
-            role == Role.ADMIN && !adminView && screen in setOf(Screen.CLASS, Screen.MANAGE) -> Screen.SCHOOL
-            role == Role.ADMIN && adminView && screen == Screen.SCHOOL -> Screen.CLASS
+            screen == Screen.HOME && home != Screen.HOME -> home
+            screen == Screen.STUDENT && !isStudent -> home
+            screen == Screen.START && !isStaff -> home
+            isStudent && screen != Screen.STUDENT && screen != Screen.SETUP -> Screen.STUDENT
+            screen in setOf(Screen.CLASS, Screen.MANAGE) && openClass == null ->
+                if (openSchool != null) Screen.SCHOOL else home
+            screen == Screen.SCHOOL && openSchool == null -> home
             else -> null
         }
         if (target != null) vm.screen = target
@@ -141,7 +164,7 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
         when (screen) {
             Screen.HOME -> HomeScreen(
                 showClassSetup = cvm.isConfigured,
-                onSetupClick = { vm.screen = Screen.SETUP },
+                onSetupClick = { openSetup(SetupMode.NEW) },
                 onSendClick = { vm.screen = Screen.SEND },
                 onReceiveClick = { vm.screen = Screen.RECEIVE },
             )
@@ -155,43 +178,50 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
             }
             Screen.SETUP -> SetupScreen(
                 cvm,
-                addingClass = memberships.any { it.role != Role.STUDENT },
+                mode = setupMode,
                 onBack = goHome,
-                // The navigation effect above moves admins on to their school.
-                onDone = { vm.screen = Screen.CLASS },
+                onDone = {
+                    vm.screen = when {
+                        cvm.current.value != null -> Screen.CLASS
+                        cvm.openSchool.value != null -> Screen.SCHOOL
+                        LocalSetup.isStudentDevice -> Screen.STUDENT
+                        else -> Screen.START
+                    }
+                },
             )
-            Screen.CLASS -> when (membership?.role) {
-                Role.STUDENT -> StudentClassScreen(cvm)
-                Role.TEACHER -> TeacherClassScreen(
+            Screen.STUDENT -> StudentClassScreen(cvm, onJoinAnother = { openSetup(SetupMode.ADD_STUDENT) })
+            Screen.START -> StartScreen(
+                cvm,
+                onOpenClass = { cvm.openClass(it); vm.screen = Screen.CLASS },
+                onOpenSchool = { cvm.openSchool(it); vm.screen = Screen.SCHOOL },
+                onAdd = { openSetup(SetupMode.ADD_STAFF) },
+                onWifiMode = { vm.screen = Screen.SEND },
+            )
+            Screen.SCHOOL -> {
+                BackHandler(onBack = goStart)
+                SchoolScreen(
                     cvm,
-                    onSettings = { cvm.clearError(); vm.screen = Screen.MANAGE },
-                    onAddClass = { cvm.clearError(); vm.screen = Screen.SETUP },
+                    onOpenClass = { cvm.openSchoolClass(it); vm.screen = Screen.CLASS },
+                    onBack = goStart,
                     onWifiMode = { vm.screen = Screen.SEND },
                 )
-                Role.ADMIN -> if (adminView) {
-                    BackHandler(onBack = backToSchool)
-                    TeacherClassScreen(
-                        cvm,
-                        onSettings = { cvm.clearError(); vm.screen = Screen.MANAGE },
-                        onAddClass = { cvm.clearError(); vm.screen = Screen.SETUP },
-                        onWifiMode = { vm.screen = Screen.SEND },
-                        onBack = backToSchool,
-                    )
-                } else {
-                    Unit
-                }
-                null -> Unit
+            }
+            Screen.CLASS -> if (openClass != null) {
+                BackHandler(onBack = backFromClass)
+                TeacherClassScreen(
+                    cvm,
+                    onSettings = { cvm.clearError(); vm.screen = Screen.MANAGE },
+                    onWifiMode = { vm.screen = Screen.SEND },
+                    onBack = backFromClass,
+                )
+            } else {
+                Unit
             }
             Screen.MANAGE -> {
+                val backToClass = { vm.screen = Screen.CLASS }
                 BackHandler(onBack = backToClass)
                 ManageClassScreen(cvm, onBack = backToClass)
             }
-            Screen.SCHOOL -> SchoolScreen(
-                cvm,
-                onOpenClass = { cvm.openSchoolClass(it); vm.screen = Screen.CLASS },
-                onAddClassOrSchool = { cvm.clearError(); vm.screen = Screen.SETUP },
-                onWifiMode = { vm.screen = Screen.SEND },
-            )
         }
     }
 

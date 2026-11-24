@@ -110,6 +110,9 @@
     <string name="student_sound_on">Sound is on</string>
     <string name="student_sound_off">Sound is off. Your teacher turned it off.</string>
     <string name="student_leave">Leave class</string>
+    <string name="student_join_another">Join another class</string>
+    <string name="student_classes_title">My classes</string>
+    <string name="student_leave_which">Which class?</string>
     <string name="student_leave_title">Leave the class?</string>
     <string name="student_leave_text">A teacher needs to enter the teacher code to take this device out of the class.</string>
     <string name="removed_notice">A teacher removed this device from %1$s.</string>
@@ -155,6 +158,12 @@
     <string name="send_class_ok">Sent.</string>
     <string name="send_class_failed">Couldn\'t send. Check the internet connection.</string>
     <string name="recipients_title">Send to</string>
+    <string name="audience_online">Online devices only (%1$d now)</string>
+    <plurals name="send_to_online">
+        <item quantity="one">Send to %1$d online device</item>
+        <item quantity="other">Send to %1$d online devices</item>
+    </plurals>
+    <string name="send_none_online">No devices are online right now.</string>
     <string name="recipients_some">Or only these devices:</string>
     <string name="teacher_recent">Shared</string>
     <string name="receipt_opened">Opened by %1$d of %2$d</string>
@@ -181,16 +190,32 @@
     <string name="rename_text">The new name shows here and on the device.</string>
     <string name="rename_label">Name</string>
 
+    <!-- Start screen (teachers and admins) -->
+    <string name="start_subtitle">Your schools and classes</string>
+    <string name="start_add">Add a class or school</string>
+    <string name="start_schools">Your schools</string>
+    <string name="start_classes">Your classes</string>
+    <string name="start_other_classes">Classes without a school</string>
+    <string name="start_all_schools">All schools (super admin)</string>
+    <string name="start_no_schools">No schools yet.</string>
+    <string name="start_admin_role">School admin</string>
+    <string name="start_teacher_role">Teacher: %1$s</string>
+    <string name="start_class_count">%1$d classes</string>
+    <string name="device_id_menu">Device ID</string>
+    <string name="device_id_title">This device\'s ID</string>
+    <string name="device_id_text">Only needed to make this device the super admin: add it under superAdmins in the Firebase console (see the README).</string>
+
     <!-- School admin -->
     <string name="school_tag">School</string>
     <string name="school_default_name">My school</string>
     <string name="school_subtitle">School admin · %1$d classes</string>
+    <string name="school_subtitle_super">Super admin · %1$d classes</string>
     <string name="school_tab_classes">Classes (%1$d)</string>
     <string name="school_tab_settings">School settings</string>
     <string name="school_new_class">New class</string>
     <string name="school_new_class_text">The class is added to the school. Give its teacher code to the class teacher.</string>
     <string name="school_no_classes_title">No classes yet</string>
-    <string name="school_no_classes_text">Create a class here, or give your teachers the school code %1$s. They enter it when they create a class.</string>
+    <string name="school_no_classes_text">Create a class here, or give your teachers the school code below. They enter it when they create a class.</string>
     <string name="school_code">School code</string>
     <string name="school_code_hint">For teachers: they enter it when they create a class, so the class belongs to the school.</string>
     <string name="admin_code">Admin code</string>

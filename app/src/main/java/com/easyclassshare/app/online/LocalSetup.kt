@@ -10,10 +10,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Remembers which classes this device is in, so the setup only has to be done once.
+ * Remembers which classes and schools this device is in, so the setup only has to be done once.
  *
- * A student tablet is in exactly one class. A teacher can be in several classes (and an
- * admin in several schools) and picks which one is shown ([membership] is the active one).
+ * A device is either a student device (in one or more classes) or a teacher/admin device
+ * (in any number of classes and schools). Joining as a student removes teacher and admin
+ * entries and the other way round.
  */
 object LocalSetup {
     private lateinit var appContext: Context
@@ -22,54 +23,36 @@ object LocalSetup {
     private val _memberships = MutableStateFlow<List<Membership>>(emptyList())
     val memberships: StateFlow<List<Membership>> = _memberships.asStateFlow()
 
-    private val _membership = MutableStateFlow<Membership?>(null)
-
-    /** The class shown right now (a student's only class, or the teacher's chosen one). */
-    val membership: StateFlow<Membership?> = _membership.asStateFlow()
-
     /** Name of the class a teacher just removed this device from, until the message was seen. */
     private val _removedFrom = MutableStateFlow<String?>(null)
     val removedFrom: StateFlow<String?> = _removedFrom.asStateFlow()
+
+    val isStudentDevice: Boolean get() = _memberships.value.any { it.role == Role.STUDENT }
 
     @Synchronized
     fun init(context: Context) {
         if (::prefs.isInitialized) return
         appContext = context.applicationContext
         prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val list = readList()
-        _memberships.value = list
-        _membership.value = pickActive(list, prefs.getString(KEY_ACTIVE, null))
+        _memberships.value = readList()
     }
 
     @Synchronized
     fun save(membership: Membership) {
-        val list = if (membership.role == Role.STUDENT) {
-            listOf(membership)
-        } else {
-            // Teachers and school admins can have several classes and schools on one device.
-            _memberships.value.filter { it.role != Role.STUDENT && !it.sameClass(membership) } + membership
-        }
-        if (membership.role == Role.STUDENT) {
-            lastAnnouncedMessageTime = 0L
-            prefs.edit().remove(KEY_OPENED).apply()
-        }
+        val isStudent = membership.role == Role.STUDENT
+        val list = _memberships.value.filter { (it.role == Role.STUDENT) == isStudent && !it.sameClass(membership) } +
+            membership
+        if (isStudent) setLastAnnounced(membership.classId, 0L)
         _removedFrom.value = null
-        publish(list, membership.classId)
-    }
-
-    @Synchronized
-    fun setActive(classId: String) {
-        publish(_memberships.value, classId)
+        publish(list)
     }
 
     @Synchronized
     fun remove(membership: Membership) {
-        val list = _memberships.value.filterNot { it.sameClass(membership) }
-        val active = _membership.value?.takeUnless { it.sameClass(membership) }
-        publish(list, active?.classId)
+        publish(_memberships.value.filterNot { it.sameClass(membership) })
     }
 
-    /** Called when a class no longer lists this device (a teacher removed it). */
+    /** Called when a class or school no longer lists this device (a teacher or admin removed it). */
     @Synchronized
     fun markRemoved(membership: Membership) {
         val known = _memberships.value.firstOrNull { it.sameClass(membership) } ?: return
@@ -81,21 +64,23 @@ object LocalSetup {
         _removedFrom.value = null
     }
 
-    /** Keeps the saved class name up to date when a teacher renames the class. */
+    /** Keeps the saved class or school name up to date when it changes online. */
     @Synchronized
     fun updateClassName(classId: String, className: String) {
         val list = _memberships.value
         if (list.none { it.classId == classId && it.className != className }) return
-        publish(list.map { if (it.classId == classId) it.copy(className = className) else it }, _membership.value?.classId)
+        publish(list.map { if (it.classId == classId) it.copy(className = className) else it })
     }
 
-    /** Server time of the newest message already announced on this device (0 = none yet). */
-    var lastAnnouncedMessageTime: Long
-        get() = prefs.getLong(KEY_LAST_MESSAGE, 0L)
-        set(value) = prefs.edit().putLong(KEY_LAST_MESSAGE, value).apply()
+    /** Server time of the newest message of [classId] already announced on this device (0 = none yet). */
+    fun lastAnnounced(classId: String): Long = prefs.getLong(KEY_LAST_MESSAGE + classId, 0L)
+
+    fun setLastAnnounced(classId: String, time: Long) {
+        prefs.edit().putLong(KEY_LAST_MESSAGE + classId, time).apply()
+    }
 
     /**
-     * Remembers message ids this tablet already reported as opened, so each one is sent once.
+     * Remembers message ids this device already reported as opened, so each one is sent once.
      * Returns false if [messageId] was already reported.
      */
     @Synchronized
@@ -113,20 +98,12 @@ object LocalSetup {
         prefs.edit().putString(KEY_OPENED, known.joinToString(",")).apply()
     }
 
-    private fun publish(list: List<Membership>, activeClassId: String?) {
-        val active = pickActive(list, activeClassId)
-        prefs.edit()
-            .putString(KEY_LIST, toJson(list))
-            .putString(KEY_ACTIVE, active?.classId)
-            .apply()
+    private fun publish(list: List<Membership>) {
+        prefs.edit().putString(KEY_LIST, toJson(list)).apply()
         _memberships.value = list
-        _membership.value = active
         // A device that is no longer a student anywhere gets its sound back.
         if (list.none { it.role == Role.STUDENT }) SoundEnforcer(appContext).restore()
     }
-
-    private fun pickActive(list: List<Membership>, classId: String?): Membership? =
-        list.firstOrNull { it.classId == classId } ?: list.firstOrNull()
 
     private fun Membership.sameClass(other: Membership) = classId == other.classId && role == other.role
 
@@ -142,6 +119,7 @@ object LocalSetup {
                     role = role,
                     name = o.optString("name"),
                     className = o.optString("className"),
+                    schoolName = o.optString("schoolName"),
                 )
             }
         }.getOrDefault(emptyList())
@@ -163,7 +141,8 @@ object LocalSetup {
                     .put("classId", m.classId)
                     .put("role", m.role.name)
                     .put("name", m.name)
-                    .put("className", m.className),
+                    .put("className", m.className)
+                    .put("schoolName", m.schoolName),
             )
         }
         return array.toString()
@@ -171,10 +150,9 @@ object LocalSetup {
 
     private const val PREFS_NAME = "online_class"
     private const val KEY_LIST = "memberships"
-    private const val KEY_ACTIVE = "active_class"
-    private const val KEY_LAST_MESSAGE = "last_message_time"
+    private const val KEY_LAST_MESSAGE = "last_message_time_"
     private const val KEY_OPENED = "opened_ids"
-    private const val MAX_REMEMBERED_OPENED = 200
+    private const val MAX_REMEMBERED_OPENED = 300
     private const val OLD_KEY_CLASS = "class_id"
     private const val OLD_KEY_ROLE = "role"
     private const val OLD_KEY_NAME = "name"
