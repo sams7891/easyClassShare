@@ -25,7 +25,7 @@ class SoundEnforcer(context: Context) {
         enforce()
     }
 
-    /** Puts any stream a kid turned back up down to zero again. */
+    /** Puts any stream a kid turned back up down to zero again. Called very often, so it is cheap. */
     fun enforce() {
         if (!isMuted) return
         for (stream in STREAMS) {

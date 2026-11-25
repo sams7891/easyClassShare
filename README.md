@@ -67,12 +67,12 @@ permissions**):
 |---|---|
 | Notifications (Android 13+) | New links show up while the app is closed |
 | Display over other apps | *Eyes on me* covers the screen over any app |
-| **Eyes on me lock** (Accessibility) | While *Eyes on me* is on, students can't pull down the notifications or open the device settings |
+| **Eyes on me lock** (Accessibility) | While *Eyes on me* is on, students can't pull down the notifications or open the device settings; while sound is off, the volume buttons do nothing |
 | No battery limits | Android doesn't stop the app, so the device stays connected |
 
 The **Eyes on me lock** is an accessibility service: *Settings → Accessibility →
-Easy Class Share*. It only does something while *Eyes on me* is on and doesn't
-read anything on the screen. On **Android 13 and newer**, an APK installed from
+Easy Class Share*. It only does something while *Eyes on me* or the sound lock is
+on and doesn't read anything on the screen. On **Android 13 and newer**, an APK installed from
 outside a store first needs *App info → ⋮ → Allow restricted settings*, otherwise
 the switch is greyed out. Without the lock, *Eyes on me* still covers the
 screen, but on Android 12 and newer students can reach the settings through the
@@ -137,8 +137,9 @@ The teacher screen has two status tiles at the top and two tabs:
 
 ### How the sound lock works
 While sound is off for a device, the app sets the device's volume (media,
-notifications, system and ring) to zero and puts it back to zero if a child
-turns it up. Only a teacher can switch it on again; then the old volume comes
+notifications, system and ring) to zero. With the **Eyes on me lock** switched
+on, the volume buttons simply do nothing; without it, or when a child uses the
+volume slider, the app puts the volume back to zero within a fifth of a second. Only a teacher can switch it on again; then the old volume comes
 back. This works while the app is installed and running (a small "Connected to
 my class" notification shows that). A child could still force-stop or
 uninstall the app outside of *Eyes on me*; to prevent that, the devices need

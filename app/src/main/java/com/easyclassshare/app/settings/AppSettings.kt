@@ -71,7 +71,11 @@ object AppSettings {
     fun wrap(base: Context): Context {
         load(base)
         val tag = _language.value.tag
-        if (tag.isEmpty()) return base
+        if (tag.isEmpty()) {
+            // Back to the device language, also for dates and times ("5 minutes ago").
+            base.resources.configuration.locales[0]?.let { Locale.setDefault(it) }
+            return base
+        }
         val locale = Locale.forLanguageTag(tag)
         Locale.setDefault(locale)
         val config = Configuration(base.resources.configuration)

@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.view.KeyEvent
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import com.easyclassshare.app.settings.AppSettings
@@ -19,10 +20,14 @@ import kotlinx.coroutines.flow.asStateFlow
  * is drawn above the status bar and the shade, and while "Eyes on me" is on this
  * service also closes the shade and leaves the Settings app if they open anyway.
  *
- * It does nothing while "Eyes on me" is off and reads no screen content.
+ * While a teacher has sound off it also swallows the volume buttons, so the sound can't
+ * come back even for a moment.
+ *
+ * Otherwise it does nothing, and it never reads screen content.
  */
 class LockService : AccessibilityService() {
     private var overlay: AttentionOverlay? = null
+    private val sound by lazy { SoundEnforcer(this) }
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(AppSettings.wrap(base))
@@ -62,6 +67,12 @@ class LockService : AccessibilityService() {
             @Suppress("DEPRECATION")
             sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
         }
+    }
+
+    /** Volume buttons do nothing while the teacher has sound off. All other keys pass. */
+    override fun onKeyEvent(event: KeyEvent): Boolean = when (event.keyCode) {
+        KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE -> sound.isMuted
+        else -> false
     }
 
     override fun onInterrupt() = Unit

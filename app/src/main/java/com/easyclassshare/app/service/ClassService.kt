@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -46,20 +47,38 @@ class ClassService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /** The context before the app language was applied, to apply a newly chosen one. */
+    private lateinit var plainBase: Context
+
+    /** Texts for notifications, in the language currently chosen in Settings. */
+    private lateinit var texts: Context
+    private var soundAllowedNow = true
+
     override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(AppSettings.wrap(base))
+        plainBase = base
+        texts = AppSettings.wrap(base)
+        super.attachBaseContext(texts)
     }
 
     override fun onCreate() {
         super.onCreate()
         enforcer = SoundEnforcer(this)
         overlay = AttentionOverlay(this)
-        Notifications.createChannels(this)
-        val notification = Notifications.ongoing(this, soundAllowed = !enforcer.isMuted)
+        Notifications.createChannels(texts)
+        soundAllowedNow = !enforcer.isMuted
+        val notification = Notifications.ongoing(texts, soundAllowed = soundAllowedNow)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(Notifications.ONGOING_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
             startForeground(Notifications.ONGOING_ID, notification)
+        }
+        scope.launch {
+            // Another language in Settings: show the notifications in it straight away.
+            AppSettings.language.drop(1).collect {
+                texts = AppSettings.wrap(plainBase)
+                Notifications.createChannels(texts)
+                Notifications.update(texts, soundAllowedNow)
+            }
         }
         scope.launch {
             LocalSetup.memberships
@@ -109,7 +128,7 @@ class ClassService : Service() {
                     // The first time, just remember where we are: old messages are not "new".
                     if (lastAnnounced == 0L || newest.timestamp <= lastAnnounced) return@collect
                     // While the app is open the message just appears in the inbox.
-                    if (!AppVisibility.isForeground) Notifications.newMessage(this@ClassService, newest, classId)
+                    if (!AppVisibility.isForeground) Notifications.newMessage(texts, newest, classId)
                 }
             }
         }
@@ -133,7 +152,7 @@ class ClassService : Service() {
                     if (attention == null) {
                         overlay.hide()
                         lock?.hideAttention()
-                        Notifications.cancelAttention(this@ClassService)
+                        Notifications.cancelAttention(texts)
                         return@collect
                     }
                     // The accessibility lock also covers the notification shade; the normal overlay is the fallback.
@@ -145,20 +164,21 @@ class ClassService : Service() {
                     }
                     if (!shown && !AppVisibility.isForeground) {
                         // No permission to cover the screen: the app shows it when opened.
-                        Notifications.attention(this@ClassService, attention)
+                        Notifications.attention(texts, attention)
                     }
                 }
             } finally {
                 overlay.hide()
                 LockService.instance.value?.hideAttention()
-                Notifications.cancelAttention(this@ClassService)
+                Notifications.cancelAttention(texts)
             }
         }
         launch {
             // Muted if any class has sound off for this device.
             val perClass = classes.map { ClassRepository.soundAllowedForMe(it.classId).catch { emit(true) } }
             combine(perClass) { all -> all.all { it } }.distinctUntilChanged().collectLatest { allowed ->
-                Notifications.update(this@ClassService, allowed)
+                soundAllowedNow = allowed
+                Notifications.update(texts, allowed)
                 if (allowed) enforcer.restore() else keepMuted()
             }
         }
@@ -181,7 +201,8 @@ class ClassService : Service() {
         try {
             coroutineScope {
                 launch {
-                    // Backup for devices that don't announce volume changes.
+                    // Backup for devices that don't announce volume changes, and for the volume
+                    // slider in the notification shade (the buttons are blocked by LockService).
                     while (true) {
                         enforcer.enforce()
                         delay(ENFORCE_INTERVAL_MS)
@@ -232,7 +253,7 @@ class ClassService : Service() {
 
     companion object {
         private const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
-        private const val ENFORCE_INTERVAL_MS = 1000L
+        private const val ENFORCE_INTERVAL_MS = 200L
 
         fun start(context: Context) {
             try {

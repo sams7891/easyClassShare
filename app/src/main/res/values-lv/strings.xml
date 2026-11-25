@@ -267,7 +267,7 @@
     <string name="permission_overlay_title">Rādīt pāri citām lietotnēm</string>
     <string name="permission_overlay_text">„Uzmanību uz mani” var aizsegt ekrānu, lai kāda lietotne būtu atvērta.</string>
     <string name="permission_lock_title">„Uzmanību uz mani” bloķēšana</string>
-    <string name="permission_lock_text">Ieslēdz Easy Class Share sadaļā Pieejamība. Tad skolēni nevarēs atvērt paziņojumus vai iestatījumus, kamēr „Uzmanību uz mani” ir ieslēgts.</string>
+    <string name="permission_lock_text">Ieslēdz Easy Class Share sadaļā Pieejamība. Tad skolēni nevarēs atvērt paziņojumus vai iestatījumus, kamēr „Uzmanību uz mani” ir ieslēgts, un skaļuma pogas nedarbosies, kamēr skaņa ir izslēgta.</string>
     <string name="permission_lock_restricted">Vai slēdzis ir pelēks? Atver Informācija par lietotni, augšā pieskaries ⋮ un izvēlies Atļaut ierobežotos iestatījumus. Tad mēģini vēlreiz.</string>
     <string name="permission_open_app_info">Atvērt Informācija par lietotni</string>
     <string name="permission_battery_title">Bez akumulatora ierobežojumiem</string>
@@ -277,7 +277,7 @@
     <string name="permissions_done">Gatavs</string>
     <string name="permissions_later">Vēlāk</string>
     <string name="lock_service_label">Easy Class Share: „Uzmanību uz mani” bloķēšana</string>
-    <string name="lock_service_description">Ļauj skolotāja „Uzmanību uz mani” ziņai aizsegt visu ekrānu, arī paziņojumus. Tā darbojas tikai tad, kad „Uzmanību uz mani” ir ieslēgts, un nelasa neko no ekrāna.</string>
+    <string name="lock_service_description">Ļauj skolotāja „Uzmanību uz mani” ziņai aizsegt visu ekrānu, arī paziņojumus, un bloķē skaļuma pogas, kamēr skolotājs ir izslēdzis skaņu. Neko citu tā nedara un nelasa neko no ekrāna.</string>
 
     <!-- Notifications -->
     <string name="channel_class">Savienojums ar klasi</string>

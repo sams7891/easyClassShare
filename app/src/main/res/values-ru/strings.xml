@@ -270,7 +270,7 @@
     <string name="permission_overlay_title">Поверх других приложений</string>
     <string name="permission_overlay_text">«Всё внимание на меня» может закрыть экран, какое бы приложение ни было открыто.</string>
     <string name="permission_lock_title">Блокировка «Всё внимание на меня»</string>
-    <string name="permission_lock_text">Включи Easy Class Share в разделе «Специальные возможности». Тогда ученики не смогут открыть уведомления или настройки, пока включено «Всё внимание на меня».</string>
+    <string name="permission_lock_text">Включи Easy Class Share в разделе «Специальные возможности». Тогда ученики не смогут открыть уведомления или настройки, пока включено «Всё внимание на меня», а кнопки громкости не будут работать, пока звук выключен.</string>
     <string name="permission_lock_restricted">Переключатель серый? Открой «О приложении», нажми ⋮ вверху и выбери «Разрешить ограниченные настройки». Потом попробуй ещё раз.</string>
     <string name="permission_open_app_info">Открыть «О приложении»</string>
     <string name="permission_battery_title">Без ограничений батареи</string>
@@ -280,7 +280,7 @@
     <string name="permissions_done">Готово</string>
     <string name="permissions_later">Позже</string>
     <string name="lock_service_label">Easy Class Share: блокировка «Всё внимание на меня»</string>
-    <string name="lock_service_description">Позволяет сообщению учителя «Всё внимание на меня» закрыть весь экран, включая уведомления. Работает, только пока включено «Всё внимание на меня», и ничего не читает с экрана.</string>
+    <string name="lock_service_description">Позволяет сообщению учителя «Всё внимание на меня» закрыть весь экран, включая уведомления, и блокирует кнопки громкости, пока учитель выключил звук. Больше ничего не делает и ничего не читает с экрана.</string>
 
     <!-- Notifications -->
     <string name="channel_class">Связь с классом</string>

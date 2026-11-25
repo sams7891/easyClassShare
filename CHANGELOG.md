@@ -4,6 +4,15 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+### Fixed
+- Muted devices: the volume buttons no longer bring the sound back for a
+  moment. With the Eyes on me lock switched on they do nothing while sound is
+  off; without it the volume goes back to zero within a fifth of a second
+  (was up to a second).
+- The "Connected to your class" notification switches language right away when
+  the language is changed in Settings.
+
 ## [1.3.0] - 2026-11-25
 ### Added
 - **Online classes** (Firebase): one-time setup per device with a class code;
