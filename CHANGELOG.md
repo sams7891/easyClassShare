@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.3.1] - 2026-11-25
 ### Fixed
 - Muted devices: the volume buttons no longer bring the sound back for a
   moment. With the Eyes on me lock switched on they do nothing while sound is
