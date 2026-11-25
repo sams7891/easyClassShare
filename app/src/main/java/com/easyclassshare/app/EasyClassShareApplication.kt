@@ -1,11 +1,18 @@
 package com.easyclassshare.app
 
 import android.app.Application
+import android.content.Context
 import com.easyclassshare.app.online.ClassRepository
 import com.easyclassshare.app.online.LocalSetup
 import com.easyclassshare.app.service.SoundEnforcer
+import com.easyclassshare.app.settings.AppSettings
 
 class EasyClassShareApplication : Application() {
+    override fun attachBaseContext(base: Context) {
+        // Chosen app language (Settings) also for texts made outside the screens.
+        super.attachBaseContext(AppSettings.wrap(base))
+    }
+
     override fun onCreate() {
         super.onCreate()
         LocalSetup.init(this)

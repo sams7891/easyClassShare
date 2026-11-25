@@ -44,6 +44,7 @@ fun HomeScreen(
     onSetupClick: () -> Unit,
     onSendClick: () -> Unit,
     onReceiveClick: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     Scaffold { padding ->
         Box(
@@ -59,9 +60,12 @@ fun HomeScreen(
                     .padding(horizontal = 20.dp, vertical = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-                    Text(stringResource(R.string.home_tagline), style = MaterialTheme.typography.bodyLarge, color = InkSoft)
+                Row(verticalAlignment = Alignment.Top) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+                        Text(stringResource(R.string.home_tagline), style = MaterialTheme.typography.bodyLarge, color = InkSoft)
+                    }
+                    SettingsButton(onSettings)
                 }
 
                 if (showClassSetup) {

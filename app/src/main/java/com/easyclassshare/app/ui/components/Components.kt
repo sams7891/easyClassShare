@@ -54,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.easyclassshare.app.R
+import com.easyclassshare.app.ui.theme.CardBg
 import com.easyclassshare.app.ui.theme.Brick
 import com.easyclassshare.app.ui.theme.BrickLight
 import com.easyclassshare.app.ui.theme.Chalk
@@ -112,7 +113,7 @@ fun SoftButton(
         modifier = modifier.heightIn(min = 52.dp),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(1.dp, Line),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = contentColor),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = CardBg, contentColor = contentColor),
     ) {
         if (icon != null) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -179,7 +180,7 @@ fun AppTopBar(
 @Composable
 fun Panel(
     modifier: Modifier = Modifier,
-    color: Color = Color.White,
+    color: Color = CardBg,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(

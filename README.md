@@ -78,8 +78,11 @@ The teacher screen has two status tiles at the top and two tabs:
   for 10 to 60 minutes (sound then comes back by itself).
 - **Eyes on me**: tap to cover every student screen with "Eyes on your teacher";
   tap again to end it. Over other apps this needs the device's *Display over
-  other apps* permission (the student screen asks for it once; the Devices tab
-  shows which devices haven't allowed it yet).
+  other apps* permission (the Devices tab shows which devices haven't allowed it
+  yet). To stop students getting into the notifications and the device settings
+  while it is on, also turn on the **Eyes on me lock** (Settings → Accessibility
+  → Easy Class Share). On Android 13 and newer, an APK installed from outside a
+  store first needs *App info → ⋮ → Allow restricted settings*.
 - **Share** tab: type or paste a link, choose **To: Whole class**, **Online
   devices only**, or single devices, and send. Every shared item shows **"Opened by 18 of 24"**; tap it
   to see who hasn't opened it yet. Shared items can be deleted from all devices.

@@ -56,6 +56,7 @@ import com.easyclassshare.app.ui.components.AppTopBar
 import com.easyclassshare.app.ui.components.BigButton
 import com.easyclassshare.app.ui.components.IconBadge
 import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.CardBg
 import com.easyclassshare.app.ui.theme.Chalk
 import com.easyclassshare.app.ui.theme.ChalkLight
 import com.easyclassshare.app.ui.theme.Ink
@@ -73,6 +74,7 @@ fun StartScreen(
     onOpenSchool: (SchoolRef) -> Unit,
     onAdd: () -> Unit,
     onWifiMode: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val memberships by cvm.memberships.collectAsState()
     val isSuperAdmin by cvm.isSuperAdmin.collectAsState()
@@ -93,6 +95,7 @@ fun StartScreen(
                 onBack = null,
                 subtitle = stringResource(R.string.start_subtitle),
                 actions = {
+                    SettingsButton(onSettings)
                     Box {
                         IconButton(onClick = { showMore = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
@@ -202,7 +205,7 @@ private fun EntryCard(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = CardBg,
         border = BorderStroke(1.dp, Line),
         modifier = Modifier.fillMaxWidth(),
     ) {

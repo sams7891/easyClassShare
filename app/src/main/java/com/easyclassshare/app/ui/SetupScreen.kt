@@ -50,6 +50,7 @@ import com.easyclassshare.app.ui.components.Notice
 import com.easyclassshare.app.ui.components.Panel
 import com.easyclassshare.app.ui.components.Tone
 import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.CardBg
 import com.easyclassshare.app.ui.theme.Chalk
 import com.easyclassshare.app.ui.theme.ChalkLight
 import com.easyclassshare.app.ui.theme.Ink
@@ -168,14 +169,18 @@ fun SetupScreen(cvm: ClassViewModel, mode: SetupMode, onBack: () -> Unit, onDone
 @Composable
 private fun JoinForm(cvm: ClassViewModel, role: Role, onDone: () -> Unit) {
     val isStudent = role == Role.STUDENT
-    var name by rememberSaveable { mutableStateOf(if (isStudent) cvm.knownStudentName else cvm.knownTeacherName) }
+    // Students don't enter their own name: a student device is named after the device.
+    var name by rememberSaveable { mutableStateOf(if (isStudent) cvm.knownDeviceName.take(40) else cvm.knownTeacherName) }
     var code by rememberSaveable { mutableStateOf("") }
     Panel {
         KidTextField(
             name, { name = it },
-            stringResource(if (isStudent) R.string.setup_student_name else R.string.setup_name),
-            if (isStudent) Icons.Filled.Face else Icons.Filled.Person,
+            stringResource(if (isStudent) R.string.setup_device_name else R.string.setup_name),
+            if (isStudent) drawableIcon(R.drawable.ic_device) else Icons.Filled.Person,
         )
+        if (isStudent) {
+            Text(stringResource(R.string.setup_device_name_hint), style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+        }
         CodeField(
             code,
             { code = it },
@@ -271,7 +276,7 @@ internal fun ChoiceCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White, contentColor = Ink),
+        colors = CardDefaults.cardColors(containerColor = CardBg, contentColor = Ink),
         border = BorderStroke(1.dp, Line),
     ) {
         Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {

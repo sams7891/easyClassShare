@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="back">Atpakaļ</string>
+    <string name="cancel">Atcelt</string>
+    <string name="ok_button">Labi</string>
+    <string name="yes_button">Jā</string>
+    <string name="remove_button">Noņemt</string>
+    <string name="delete_button">Dzēst</string>
+    <string name="done_button">Gatavs</string>
+    <string name="save_button">Saglabāt</string>
+    <string name="more_options">Vairāk iespēju</string>
+    <string name="leave_button">Pamest klasi</string>
+    <string name="copied">Nokopēts</string>
+    <string name="could_not_open">Šo saiti neizdevās atvērt</string>
+    <string name="default_sender">Skolotājs</string>
+
+    <!-- Home -->
+    <string name="home_tagline">Dalies ar saitēm ar katru ierīci savā klasē.</string>
+    <string name="home_class_title">Mana klase</string>
+    <string name="home_class_text">Iestati šo ierīci tikai vienreiz. Darbojas jebkurā tīklā – skolā vai mājās.</string>
+    <string name="home_class_button">Iestatīt</string>
+    <string name="home_wifi_title">Tas pats Wi-Fi</string>
+    <string name="home_wifi_text">Nav interneta? Dalies ar ierīcēm tajā pašā Wi-Fi tīklā.</string>
+    <string name="home_wifi_only_text">Dalies ar ierīcēm tajā pašā Wi-Fi tīklā. Internets nav vajadzīgs.</string>
+    <string name="role_send_title">Sūtīt</string>
+    <string name="role_receive_title">Saņemt</string>
+
+    <!-- Same Wi-Fi: send -->
+    <string name="send_title">Sūtīt pa Wi-Fi</string>
+    <string name="send_name_label">Tavs vārds</string>
+    <string name="send_name_hint">piem., skolotāja Liepa</string>
+    <string name="send_what_label">Ar ko vēlies dalīties?</string>
+    <string name="send_what_hint">Ielīmē saiti vai uzraksti īsu ziņu</string>
+    <string name="char_counter">%1$d / %2$d</string>
+    <string name="paste">Ielīmēt</string>
+    <string name="clear">Notīrīt</string>
+    <string name="detected_link">Šī ir saite. Skolēni to var atvērt ar vienu pieskārienu.</string>
+    <string name="detected_text">Tas tiks parādīts kā ziņa.</string>
+    <string name="send_button">Sūtīt visiem</string>
+    <string name="sending">Sūta…</string>
+    <string name="send_ok">Nosūtīts visām ierīcēm šajā Wi-Fi.</string>
+    <string name="send_failed">Neizdevās nosūtīt. Vai esi savienots ar Wi-Fi?</string>
+    <string name="sent_history_title">Nosūtīts</string>
+    <string name="send_again">Sūtīt vēlreiz</string>
+
+    <!-- Same Wi-Fi: receive -->
+    <string name="receive_title">Saņemt pa Wi-Fi</string>
+    <string name="listening_title">Gaidām skolotāju</string>
+    <string name="listening_subtitle">Jaunās saites parādīsies šeit.</string>
+    <string name="getting_ready">Gatavojamies…</string>
+    <string name="listen_error">Pašlaik nevar klausīties. Pārbaudi Wi-Fi.</string>
+    <string name="try_again">Mēģināt vēlreiz</string>
+    <string name="empty_title">Šeit vēl nekā nav</string>
+    <string name="empty_subtitle">Kad skolotājs ar kaut ko dalīsies, tas parādīsies šeit.</string>
+    <string name="new_badge">Jauns</string>
+    <string name="open_link">Atvērt</string>
+    <string name="copy">Kopēt</string>
+
+    <!-- Online class: setup -->
+    <string name="setup_title">Iestatīšana</string>
+    <string name="setup_add_class_title">Pievienot klasi vai skolu</string>
+    <string name="setup_not_configured">Šajā lietotnes versijā tiešsaistes klases nav ieslēgtas. Tas, kurš veido lietotni, var tās ieslēgt, izpildot Firebase darbības no README.</string>
+    <string name="setup_who">Kas lieto šo ierīci?</string>
+    <string name="setup_student_title">Skolēns</string>
+    <string name="setup_student_subtitle">Pievienojies klasei ar klases kodu</string>
+    <string name="setup_teacher_title">Skolotājs</string>
+    <string name="setup_teacher_subtitle">Izveido klasi vai pievienojies kādai</string>
+    <string name="setup_admin_title">Skolas administrators</string>
+    <string name="setup_admin_subtitle">Izveido skolu vai pievienojies kādai un pārvaldi visas tās klases</string>
+    <string name="setup_create_school_title">Jauna skola</string>
+    <string name="setup_create_school_subtitle">Izveido skolu un saņem tās kodus</string>
+    <string name="setup_admin_join_title">Pievienoties kā administratoram</string>
+    <string name="setup_admin_join_subtitle">Izmanto administratora kodu no cita administratora</string>
+    <string name="setup_school_name">Skolas nosaukums</string>
+    <string name="setup_create_school_hint">Tu saņemsi skolas kodu saviem skolotājiem un administratora kodu citiem administratoriem.</string>
+    <string name="setup_create_school_button">Izveidot skolu</string>
+    <string name="setup_admin_join_button">Pievienoties kā administratoram</string>
+    <string name="setup_school_code_optional">Skolas kods (nav obligāts)</string>
+    <string name="setup_school_code_hint">Ja tava skola izmanto Easy Class Share, ievadi tās skolas kodu. Tad skolas administratori varēs palīdzēt pārvaldīt šo klasi.</string>
+    <string name="setup_once_tip">Tas jādara tikai vienreiz. Ierīce atceras savu klasi arī pēc restartēšanas.</string>
+    <string name="setup_create_title">Jauna klase</string>
+    <string name="setup_create_subtitle">Izveido klasi un saņem tās kodus</string>
+    <string name="setup_cojoin_title">Pievienoties kā skolotājam</string>
+    <string name="setup_cojoin_subtitle">Izmanto skolotāja kodu no kolēģa</string>
+    <string name="setup_device_name">Ierīces nosaukums</string>
+    <string name="setup_device_name_hint">Skolotājs redz šo nosaukumu un vēlāk var to mainīt.</string>
+    <string name="setup_name">Tavs vārds</string>
+    <string name="setup_class_code">Klases kods</string>
+    <string name="setup_teacher_code">Skolotāja kods</string>
+    <string name="setup_class_name">Klases nosaukums, piem., 3.B</string>
+    <string name="setup_join_button">Pievienoties klasei</string>
+    <string name="setup_cojoin_button">Pievienoties kā skolotājam</string>
+    <string name="setup_create_button">Izveidot klasi</string>
+    <string name="setup_working">Mirklīti…</string>
+
+    <!-- Online class: errors -->
+    <string name="online_error_code">Šis kods nedarbojas. Pārbaudi to un mēģini vēlreiz.</string>
+    <string name="online_error_student_code">Tas ir klases kods skolēniem. Palūdz skolotāja kodu.</string>
+    <string name="online_error_teacher_code">Tas ir skolotāja kods. Palūdz skolotājam klases kodu.</string>
+    <string name="online_error_wrong_code">Šis kods ir paredzēts kam citam. Pārbaudi, kurš kods tev vajadzīgs.</string>
+    <string name="online_error_leave_code">Šis skolotāja kods nav pareizs.</string>
+    <string name="online_error_connection">Nav savienojuma. Pārbaudi internetu un mēģini vēlreiz.</string>
+    <string name="online_error_denied">Serveris to atteica. Visticamāk, jāatjaunina datubāzes noteikumi (skati README).</string>
+    <string name="online_error_generic">Kaut kas nogāja greizi. Pārbaudi internetu un mēģini vēlreiz.</string>
+
+    <!-- Online class: student -->
+    <string name="class_default_name">Mana klase</string>
+    <string name="student_sound_on">Skaņa ir ieslēgta</string>
+    <string name="student_sound_off">Skaņa ir izslēgta. To izslēdza skolotājs.</string>
+    <string name="student_leave">Pamest klasi</string>
+    <string name="student_join_another">Pievienoties citai klasei</string>
+    <string name="student_classes_title">Manas klases</string>
+    <string name="student_leave_which">Kuru klasi?</string>
+    <string name="student_leave_title">Pamest klasi?</string>
+    <string name="student_leave_text">Lai izņemtu šo ierīci no klases, skolotājam jāievada skolotāja kods.</string>
+    <string name="removed_notice">Skolotājs izņēma šo ierīci no klases %1$s.</string>
+    <string name="removed_notice_unknown">Skolotājs izņēma šo ierīci no klases.</string>
+    <string name="lock_permission_title">Trūkst dažu atļauju</string>
+    <string name="lock_permission_text">Bez tām saites vai „Uzmanību uz mani” šajā ierīcē var nedarboties.</string>
+    <string name="lock_permission_button">Pārbaudīt atļaujas</string>
+
+    <!-- Online class: teacher -->
+    <string name="teacher_devices_summary">Tiešsaistē %1$d no %2$d ierīcēm</string>
+    <string name="class_settings">Klases iestatījumi</string>
+    <string name="teacher_wifi_mode">Tā vietā dalīties tajā pašā Wi-Fi</string>
+    <string name="classes_title">Tavas klases</string>
+    <string name="classes_add">Pievienot klasi</string>
+    <string name="tab_share">Dalīties</string>
+    <string name="tab_tablets">Ierīces (%1$d)</string>
+
+    <string name="sound_label">Skaņa</string>
+    <string name="sound_state_on">Ieslēgta</string>
+    <string name="sound_state_muted">Izslēgta</string>
+    <string name="sound_state_muted_until">Izslēgta līdz %1$s</string>
+    <string name="sound_menu_on">Ieslēgt skaņu</string>
+    <string name="sound_menu_mute">Izslēgt, līdz es ieslēgšu</string>
+    <string name="sound_menu_mute_for">Izslēgt uz %1$d min</string>
+
+    <string name="attention_label">Uzmanību uz mani</string>
+    <string name="attention_state_off">Izslēgts</string>
+    <string name="attention_state_on">Ieslēgts. Pieskaries, lai beigtu</string>
+    <string name="attention_default_text">Skaties uz skolotāju</string>
+
+    <string name="send_to_label">Kam</string>
+    <string name="audience_class">Visa klase</string>
+    <string name="audience_removed_tablet">Izņemta ierīce</string>
+    <plurals name="audience_tablets">
+        <item quantity="zero">%1$d ierīču</item>
+        <item quantity="one">%1$d ierīce</item>
+        <item quantity="other">%1$d ierīces</item>
+    </plurals>
+    <string name="send_to_class">Sūtīt klasei</string>
+    <plurals name="send_to_tablets">
+        <item quantity="zero">Sūtīt %1$d ierīcēm</item>
+        <item quantity="one">Sūtīt %1$d ierīcei</item>
+        <item quantity="other">Sūtīt %1$d ierīcēm</item>
+    </plurals>
+    <string name="send_class_ok">Nosūtīts.</string>
+    <string name="send_class_failed">Neizdevās nosūtīt. Pārbaudi interneta savienojumu.</string>
+    <string name="recipients_title">Sūtīt</string>
+    <string name="audience_online">Tikai tiešsaistes ierīcēm (tagad %1$d)</string>
+    <plurals name="send_to_online">
+        <item quantity="zero">Sūtīt %1$d tiešsaistes ierīcēm</item>
+        <item quantity="one">Sūtīt %1$d tiešsaistes ierīcei</item>
+        <item quantity="other">Sūtīt %1$d tiešsaistes ierīcēm</item>
+    </plurals>
+    <string name="send_none_online">Pašlaik neviena ierīce nav tiešsaistē.</string>
+    <string name="recipients_some">Vai tikai šīm ierīcēm:</string>
+    <string name="teacher_recent">Nosūtīts</string>
+    <string name="receipt_opened">Atvēra: %1$d no %2$d</string>
+    <string name="receipt_seen">Redzēja: %1$d no %2$d</string>
+    <string name="receipt_who">Kas vēl ne?</string>
+    <string name="receipt_hide">Paslēpt</string>
+    <string name="receipt_missing">Vēl ne: %1$s</string>
+    <string name="confirm_delete_message">Dzēst šo no visām ierīcēm?</string>
+
+    <string name="tablets_empty_title">Vēl nav nevienas ierīces</string>
+    <string name="tablets_empty_text">Katrā skolēna ierīcē: Iestatīt, Skolēns, tad ievadi šo klases kodu.</string>
+    <string name="summary_online">Tiešsaistē: %1$d no %2$d</string>
+    <string name="summary_muted">Bez skaņas: %1$d</string>
+    <string name="summary_low_battery">Zems akumulators: %1$d</string>
+    <string name="summary_no_lock">Bez „Uzmanību uz mani”: %1$d</string>
+    <string name="last_seen">Pēdējoreiz redzēta %1$s</string>
+    <string name="battery_level">%1$d%%</string>
+    <string name="battery_charging">%1$d%%, lādējas</string>
+    <string name="tablet_no_lock">Šajā ierīcē „Uzmanību uz mani” vēl nav atļauts</string>
+    <string name="tablet_rename">Pārdēvēt</string>
+    <string name="tablet_send_to">Sūtīt tikai šai ierīcei</string>
+    <string name="tablet_remove">Izņemt no klases</string>
+    <string name="rename_title">Pārdēvēt ierīci</string>
+    <string name="rename_text">Jaunais nosaukums būs redzams šeit un ierīcē.</string>
+    <string name="rename_label">Nosaukums</string>
+
+    <!-- Start screen (teachers and admins) -->
+    <string name="start_subtitle">Tavas skolas un klases</string>
+    <string name="start_add">Pievienot klasi vai skolu</string>
+    <string name="start_schools">Tavas skolas</string>
+    <string name="start_classes">Tavas klases</string>
+    <string name="start_other_classes">Klases bez skolas</string>
+    <string name="start_all_schools">Visas skolas (galvenais administrators)</string>
+    <string name="start_no_schools">Vēl nav nevienas skolas.</string>
+    <string name="start_admin_role">Skolas administrators</string>
+    <string name="start_teacher_role">Skolotājs: %1$s</string>
+    <string name="start_class_count">Klases: %1$d</string>
+    <string name="device_id_menu">Ierīces ID</string>
+    <string name="device_id_title">Šīs ierīces ID</string>
+    <string name="device_id_text">Vajadzīgs tikai, lai šo ierīci padarītu par galveno administratoru: pievieno to sadaļā superAdmins Firebase konsolē (skati README).</string>
+
+    <!-- School admin -->
+    <string name="school_tag">Skola</string>
+    <string name="school_default_name">Mana skola</string>
+    <string name="school_subtitle">Skolas administrators · klases: %1$d</string>
+    <string name="school_subtitle_super">Galvenais administrators · klases: %1$d</string>
+    <string name="school_tab_classes">Klases (%1$d)</string>
+    <string name="school_tab_settings">Skolas iestatījumi</string>
+    <string name="school_new_class">Jauna klase</string>
+    <string name="school_new_class_text">Klase tiek pievienota skolai. Iedod tās skolotāja kodu klases audzinātājam.</string>
+    <string name="school_no_classes_title">Vēl nav nevienas klases</string>
+    <string name="school_no_classes_text">Izveido klasi šeit vai iedod saviem skolotājiem zemāk redzamo skolas kodu. Viņi to ievada, kad veido klasi.</string>
+    <string name="school_code">Skolas kods</string>
+    <string name="school_code_hint">Skolotājiem: viņi to ievada, kad veido klasi, lai klase piederētu skolai.</string>
+    <string name="admin_code">Administratora kods</string>
+    <string name="admin_code_hint">Tikai citiem administratoriem. Ikviens ar šo kodu var pārvaldīt visas skolas klases.</string>
+    <string name="school_admins">Administratori (%1$d)</string>
+    <string name="leave_school_button">Pamest skolu</string>
+    <string name="confirm_renew_school">Izveidot jaunu skolas kodu? Vecais vairs nedarbosies. Klases, kas jau ir skolā, paliek tajā.</string>
+    <string name="confirm_renew_admin">Izveidot jaunu administratora kodu? Vecais vairs nedarbosies. Administratori, kas jau ir skolā, paliek.</string>
+    <string name="confirm_remove_admin">Noņemt %1$s no šīs skolas administratoriem?</string>
+    <string name="confirm_leave_school">Pamest šo skolu šajā ierīcē? Pārējie administratori to paturēs.</string>
+    <string name="confirm_leave_last_admin">Tu esi vienīgais administrators. Ja aiziesi, neviens vairs nevarēs pārvaldīt skolu. Tomēr aiziet?</string>
+
+    <!-- Online class: manage -->
+    <string name="manage_codes">Kodi</string>
+    <string name="manage_student_code">Klases kods</string>
+    <string name="manage_student_code_hint">Skolēni to ievada vienreiz: Iestatīt → Skolēns.</string>
+    <string name="manage_teacher_code">Skolotāja kods</string>
+    <string name="manage_teacher_code_hint">Tikai citiem šīs klases skolotājiem. Vajadzīgs arī, lai izņemtu skolēna ierīci no klases.</string>
+    <string name="manage_new_code">Jauns kods</string>
+    <string name="manage_teachers">Skolotāji (%1$d)</string>
+    <string name="manage_you">%1$s (tu)</string>
+    <string name="manage_online">Tiešsaistē</string>
+    <string name="manage_offline">Bezsaistē</string>
+    <string name="confirm_remove_device">Izņemt %1$s no klases? Ierīce var atkal pievienoties ar klases kodu.</string>
+    <string name="confirm_remove_teacher">Noņemt %1$s no šīs klases skolotājiem?</string>
+    <string name="confirm_leave_teacher">Pamest šo klasi šajā ierīcē? Pārējie skolotāji klasi paturēs.</string>
+    <string name="confirm_leave_last_teacher">Tu esi vienīgais skolotājs. Ja aiziesi, neviens vairs nevarēs pārvaldīt šo klasi. Tomēr aiziet?</string>
+    <string name="confirm_renew_student">Izveidot jaunu klases kodu? Vecais vairs nedarbosies. Ierīces, kas jau ir klasē, paliek tajā.</string>
+    <string name="confirm_renew_teacher">Izveidot jaunu skolotāja kodu? Vecais vairs nedarbosies. Skolotāji, kas jau ir klasē, paliek tajā.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Iestatījumi</string>
+    <string name="settings_language">Valoda</string>
+    <string name="settings_language_system">Tāda pati kā ierīcē</string>
+    <string name="settings_theme">Izskats</string>
+    <string name="settings_theme_system">Tāds pats kā ierīcē</string>
+    <string name="settings_theme_light">Gaišs</string>
+    <string name="settings_theme_dark">Tumšs</string>
+    <string name="settings_permissions_text">Pārbaudi, ko šī ierīce atļauj, lai saites un „Uzmanību uz mani” darbotos.</string>
+    <string name="settings_permissions_button">Pārbaudīt atļaujas</string>
+
+    <!-- Permissions (student devices) -->
+    <string name="permissions_title">Atļaujas</string>
+    <string name="permissions_intro">Skolēna ierīcei tās ir vajadzīgas, lai saites pienāktu un „Uzmanību uz mani” darbotos. Katrā ierīcē tas jādara tikai vienreiz.</string>
+    <string name="permission_notifications_title">Paziņojumi</string>
+    <string name="permission_notifications_text">Jaunās saites parādās arī tad, ja lietotne ir aizvērta.</string>
+    <string name="permission_overlay_title">Rādīt pāri citām lietotnēm</string>
+    <string name="permission_overlay_text">„Uzmanību uz mani” var aizsegt ekrānu, lai kāda lietotne būtu atvērta.</string>
+    <string name="permission_lock_title">„Uzmanību uz mani” bloķēšana</string>
+    <string name="permission_lock_text">Ieslēdz Easy Class Share sadaļā Pieejamība. Tad skolēni nevarēs atvērt paziņojumus vai iestatījumus, kamēr „Uzmanību uz mani” ir ieslēgts.</string>
+    <string name="permission_lock_restricted">Vai slēdzis ir pelēks? Atver Informācija par lietotni, augšā pieskaries ⋮ un izvēlies Atļaut ierobežotos iestatījumus. Tad mēģini vēlreiz.</string>
+    <string name="permission_open_app_info">Atvērt Informācija par lietotni</string>
+    <string name="permission_battery_title">Bez akumulatora ierobežojumiem</string>
+    <string name="permission_battery_text">Android neaptur lietotni fonā, tāpēc ierīce paliek savienota ar savu klasi.</string>
+    <string name="permission_allow">Atļaut</string>
+    <string name="permission_allowed">Atļauts</string>
+    <string name="permissions_done">Gatavs</string>
+    <string name="permissions_later">Vēlāk</string>
+    <string name="lock_service_label">Easy Class Share: „Uzmanību uz mani” bloķēšana</string>
+    <string name="lock_service_description">Ļauj skolotāja „Uzmanību uz mani” ziņai aizsegt visu ekrānu, arī paziņojumus. Tā darbojas tikai tad, kad „Uzmanību uz mani” ir ieslēgts, un nelasa neko no ekrāna.</string>
+
+    <!-- Notifications -->
+    <string name="channel_class">Savienojums ar klasi</string>
+    <string name="channel_messages">Saites no skolotāja</string>
+    <string name="notif_connected_title">Savienots ar tavu klasi</string>
+    <string name="notif_sound_on">Skaņa ir ieslēgta</string>
+    <string name="notif_sound_off">Skaņa ir izslēgta (to iestatīja skolotājs)</string>
+    <string name="notif_new_message">Jauns no: %1$s</string>
+</resources>

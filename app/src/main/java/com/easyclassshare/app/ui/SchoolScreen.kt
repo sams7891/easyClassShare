@@ -58,6 +58,7 @@ import com.easyclassshare.app.ui.components.BigButton
 import com.easyclassshare.app.ui.components.IconBadge
 import com.easyclassshare.app.ui.components.Panel
 import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.CardBg
 import com.easyclassshare.app.ui.theme.Brick
 import com.easyclassshare.app.ui.theme.Chalk
 import com.easyclassshare.app.ui.theme.ChalkLight
@@ -199,7 +200,7 @@ private fun ClassesTab(
             Surface(
                 onClick = { onOpenClass(schoolClass) },
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White,
+                color = CardBg,
                 border = BorderStroke(1.dp, Line),
                 modifier = Modifier.fillMaxWidth(),
             ) {

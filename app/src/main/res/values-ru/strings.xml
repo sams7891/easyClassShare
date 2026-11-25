@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="back">Назад</string>
+    <string name="cancel">Отмена</string>
+    <string name="ok_button">ОК</string>
+    <string name="yes_button">Да</string>
+    <string name="remove_button">Убрать</string>
+    <string name="delete_button">Удалить</string>
+    <string name="done_button">Готово</string>
+    <string name="save_button">Сохранить</string>
+    <string name="more_options">Ещё</string>
+    <string name="leave_button">Выйти из класса</string>
+    <string name="copied">Скопировано</string>
+    <string name="could_not_open">Не получилось открыть ссылку</string>
+    <string name="default_sender">Учитель</string>
+
+    <!-- Home -->
+    <string name="home_tagline">Делись ссылками со всеми устройствами класса.</string>
+    <string name="home_class_title">Мой класс</string>
+    <string name="home_class_text">Настрой это устройство один раз. Работает в любой сети, в школе и дома.</string>
+    <string name="home_class_button">Настроить</string>
+    <string name="home_wifi_title">Одна сеть Wi-Fi</string>
+    <string name="home_wifi_text">Нет интернета? Делись с устройствами в той же сети Wi-Fi.</string>
+    <string name="home_wifi_only_text">Делись с устройствами в той же сети Wi-Fi. Интернет не нужен.</string>
+    <string name="role_send_title">Отправить</string>
+    <string name="role_receive_title">Получить</string>
+
+    <!-- Same Wi-Fi: send -->
+    <string name="send_title">Отправить по Wi-Fi</string>
+    <string name="send_name_label">Твоё имя</string>
+    <string name="send_name_hint">Например, Анна Петровна</string>
+    <string name="send_what_label">Чем хочешь поделиться?</string>
+    <string name="send_what_hint">Вставь ссылку или напиши короткое сообщение</string>
+    <string name="char_counter">%1$d / %2$d</string>
+    <string name="paste">Вставить</string>
+    <string name="clear">Очистить</string>
+    <string name="detected_link">Это ссылка. Ученики откроют её одним касанием.</string>
+    <string name="detected_text">Это будет показано как сообщение.</string>
+    <string name="send_button">Отправить всем</string>
+    <string name="sending">Отправка…</string>
+    <string name="send_ok">Отправлено на все устройства в этой сети Wi-Fi.</string>
+    <string name="send_failed">Не получилось отправить. Ты подключён к Wi-Fi?</string>
+    <string name="sent_history_title">Отправлено</string>
+    <string name="send_again">Отправить ещё раз</string>
+
+    <!-- Same Wi-Fi: receive -->
+    <string name="receive_title">Получать по Wi-Fi</string>
+    <string name="listening_title">Ждём учителя</string>
+    <string name="listening_subtitle">Новые ссылки появятся здесь.</string>
+    <string name="getting_ready">Подготовка…</string>
+    <string name="listen_error">Сейчас не получается принимать. Проверь Wi-Fi.</string>
+    <string name="try_again">Попробовать ещё раз</string>
+    <string name="empty_title">Пока ничего нет</string>
+    <string name="empty_subtitle">Когда учитель чем-то поделится, это появится здесь.</string>
+    <string name="new_badge">Новое</string>
+    <string name="open_link">Открыть</string>
+    <string name="copy">Копировать</string>
+
+    <!-- Online class: setup -->
+    <string name="setup_title">Настройка</string>
+    <string name="setup_add_class_title">Добавить класс или школу</string>
+    <string name="setup_not_configured">Онлайн-классы не включены в этой версии приложения. Тот, кто собирает приложение, может включить их по шагам для Firebase из README.</string>
+    <string name="setup_who">Кто пользуется этим устройством?</string>
+    <string name="setup_student_title">Ученик</string>
+    <string name="setup_student_subtitle">Войти в класс по коду класса</string>
+    <string name="setup_teacher_title">Учитель</string>
+    <string name="setup_teacher_subtitle">Создать класс или войти в него</string>
+    <string name="setup_admin_title">Админ школы</string>
+    <string name="setup_admin_subtitle">Создать школу или войти в неё и управлять всеми её классами</string>
+    <string name="setup_create_school_title">Новая школа</string>
+    <string name="setup_create_school_subtitle">Создать школу и получить её коды</string>
+    <string name="setup_admin_join_title">Войти как админ</string>
+    <string name="setup_admin_join_subtitle">Используй код админа от другого админа</string>
+    <string name="setup_school_name">Название школы</string>
+    <string name="setup_create_school_hint">Ты получишь код школы для учителей и код админа для других админов.</string>
+    <string name="setup_create_school_button">Создать школу</string>
+    <string name="setup_admin_join_button">Войти как админ</string>
+    <string name="setup_school_code_optional">Код школы (необязательно)</string>
+    <string name="setup_school_code_hint">Если твоя школа пользуется Easy Class Share, введи её код школы. Тогда админы школы смогут помогать управлять этим классом.</string>
+    <string name="setup_once_tip">Это нужно сделать только один раз. Устройство запомнит свой класс даже после перезагрузки.</string>
+    <string name="setup_create_title">Новый класс</string>
+    <string name="setup_create_subtitle">Создать класс и получить его коды</string>
+    <string name="setup_cojoin_title">Войти как учитель</string>
+    <string name="setup_cojoin_subtitle">Используй код учителя от коллеги</string>
+    <string name="setup_device_name">Имя устройства</string>
+    <string name="setup_device_name_hint">Учитель видит это имя и может потом его изменить.</string>
+    <string name="setup_name">Твоё имя</string>
+    <string name="setup_class_code">Код класса</string>
+    <string name="setup_teacher_code">Код учителя</string>
+    <string name="setup_class_name">Название класса, например 3Б</string>
+    <string name="setup_join_button">Войти в класс</string>
+    <string name="setup_cojoin_button">Войти как учитель</string>
+    <string name="setup_create_button">Создать класс</string>
+    <string name="setup_working">Минутку…</string>
+
+    <!-- Online class: errors -->
+    <string name="online_error_code">Этот код не подходит. Проверь его и попробуй ещё раз.</string>
+    <string name="online_error_student_code">Это код класса для учеников. Попроси код учителя.</string>
+    <string name="online_error_teacher_code">Это код учителя. Попроси у учителя код класса.</string>
+    <string name="online_error_wrong_code">Этот код для другого. Проверь, какой код тебе нужен.</string>
+    <string name="online_error_leave_code">Код учителя неверный.</string>
+    <string name="online_error_connection">Нет соединения. Проверь интернет и попробуй ещё раз.</string>
+    <string name="online_error_denied">Сервер отказал. Скорее всего, нужно обновить правила базы данных (см. README).</string>
+    <string name="online_error_generic">Что-то пошло не так. Проверь интернет и попробуй ещё раз.</string>
+
+    <!-- Online class: student -->
+    <string name="class_default_name">Мой класс</string>
+    <string name="student_sound_on">Звук включён</string>
+    <string name="student_sound_off">Звук выключен. Его выключил учитель.</string>
+    <string name="student_leave">Выйти из класса</string>
+    <string name="student_join_another">Войти в другой класс</string>
+    <string name="student_classes_title">Мои классы</string>
+    <string name="student_leave_which">Какой класс?</string>
+    <string name="student_leave_title">Выйти из класса?</string>
+    <string name="student_leave_text">Чтобы убрать это устройство из класса, учитель должен ввести код учителя.</string>
+    <string name="removed_notice">Учитель убрал это устройство из класса %1$s.</string>
+    <string name="removed_notice_unknown">Учитель убрал это устройство из класса.</string>
+    <string name="lock_permission_title">Не хватает некоторых разрешений</string>
+    <string name="lock_permission_text">Без них ссылки или «Всё внимание на меня» могут не работать на этом устройстве.</string>
+    <string name="lock_permission_button">Проверить разрешения</string>
+
+    <!-- Online class: teacher -->
+    <string name="teacher_devices_summary">Устройств в сети: %1$d из %2$d</string>
+    <string name="class_settings">Настройки класса</string>
+    <string name="teacher_wifi_mode">Делиться через одну сеть Wi-Fi</string>
+    <string name="classes_title">Твои классы</string>
+    <string name="classes_add">Добавить класс</string>
+    <string name="tab_share">Поделиться</string>
+    <string name="tab_tablets">Устройства (%1$d)</string>
+
+    <string name="sound_label">Звук</string>
+    <string name="sound_state_on">Включён</string>
+    <string name="sound_state_muted">Выключен</string>
+    <string name="sound_state_muted_until">Выключен до %1$s</string>
+    <string name="sound_menu_on">Включить звук</string>
+    <string name="sound_menu_mute">Выключить, пока я не включу</string>
+    <string name="sound_menu_mute_for">Выключить на %1$d мин.</string>
+
+    <string name="attention_label">Всё внимание на меня</string>
+    <string name="attention_state_off">Выкл.</string>
+    <string name="attention_state_on">Вкл. Нажми, чтобы завершить</string>
+    <string name="attention_default_text">Все смотрим на учителя</string>
+
+    <string name="send_to_label">Кому</string>
+    <string name="audience_class">Весь класс</string>
+    <string name="audience_removed_tablet">Удалённое устройство</string>
+    <plurals name="audience_tablets">
+        <item quantity="one">%1$d устройство</item>
+        <item quantity="few">%1$d устройства</item>
+        <item quantity="many">%1$d устройств</item>
+        <item quantity="other">%1$d устройства</item>
+    </plurals>
+    <string name="send_to_class">Отправить классу</string>
+    <plurals name="send_to_tablets">
+        <item quantity="one">Отправить на %1$d устройство</item>
+        <item quantity="few">Отправить на %1$d устройства</item>
+        <item quantity="many">Отправить на %1$d устройств</item>
+        <item quantity="other">Отправить на %1$d устройства</item>
+    </plurals>
+    <string name="send_class_ok">Отправлено.</string>
+    <string name="send_class_failed">Не получилось отправить. Проверь подключение к интернету.</string>
+    <string name="recipients_title">Кому отправить</string>
+    <string name="audience_online">Только устройства в сети (сейчас %1$d)</string>
+    <plurals name="send_to_online">
+        <item quantity="one">Отправить на %1$d устройство в сети</item>
+        <item quantity="few">Отправить на %1$d устройства в сети</item>
+        <item quantity="many">Отправить на %1$d устройств в сети</item>
+        <item quantity="other">Отправить на %1$d устройства в сети</item>
+    </plurals>
+    <string name="send_none_online">Сейчас ни одно устройство не в сети.</string>
+    <string name="recipients_some">Или только на эти устройства:</string>
+    <string name="teacher_recent">Отправлено</string>
+    <string name="receipt_opened">Открыли: %1$d из %2$d</string>
+    <string name="receipt_seen">Видели: %1$d из %2$d</string>
+    <string name="receipt_who">Кто ещё нет?</string>
+    <string name="receipt_hide">Скрыть</string>
+    <string name="receipt_missing">Ещё нет: %1$s</string>
+    <string name="confirm_delete_message">Удалить это со всех устройств?</string>
+
+    <string name="tablets_empty_title">Пока нет устройств</string>
+    <string name="tablets_empty_text">На каждом устройстве ученика: Настроить, Ученик, затем введи этот код класса.</string>
+    <string name="summary_online">В сети: %1$d из %2$d</string>
+    <string name="summary_muted">Без звука: %1$d</string>
+    <string name="summary_low_battery">Мало заряда: %1$d</string>
+    <string name="summary_no_lock">Без «Всё внимание на меня»: %1$d</string>
+    <string name="last_seen">Было в сети %1$s</string>
+    <string name="battery_level">%1$d%%</string>
+    <string name="battery_charging">%1$d%%, заряжается</string>
+    <string name="tablet_no_lock">«Всё внимание на меня» пока не разрешено на этом устройстве</string>
+    <string name="tablet_rename">Переименовать</string>
+    <string name="tablet_send_to">Отправить только на это устройство</string>
+    <string name="tablet_remove">Убрать из класса</string>
+    <string name="rename_title">Переименовать устройство</string>
+    <string name="rename_text">Новое имя появится здесь и на самом устройстве.</string>
+    <string name="rename_label">Имя</string>
+
+    <!-- Start screen (teachers and admins) -->
+    <string name="start_subtitle">Твои школы и классы</string>
+    <string name="start_add">Добавить класс или школу</string>
+    <string name="start_schools">Твои школы</string>
+    <string name="start_classes">Твои классы</string>
+    <string name="start_other_classes">Классы без школы</string>
+    <string name="start_all_schools">Все школы (суперадмин)</string>
+    <string name="start_no_schools">Пока нет школ.</string>
+    <string name="start_admin_role">Админ школы</string>
+    <string name="start_teacher_role">Учитель: %1$s</string>
+    <string name="start_class_count">Классов: %1$d</string>
+    <string name="device_id_menu">ID устройства</string>
+    <string name="device_id_title">ID этого устройства</string>
+    <string name="device_id_text">Нужен, только чтобы сделать это устройство суперадмином: добавь его в superAdmins в консоли Firebase (см. README).</string>
+
+    <!-- School admin -->
+    <string name="school_tag">Школа</string>
+    <string name="school_default_name">Моя школа</string>
+    <string name="school_subtitle">Админ школы · классов: %1$d</string>
+    <string name="school_subtitle_super">Суперадмин · классов: %1$d</string>
+    <string name="school_tab_classes">Классы (%1$d)</string>
+    <string name="school_tab_settings">Настройки школы</string>
+    <string name="school_new_class">Новый класс</string>
+    <string name="school_new_class_text">Класс будет добавлен в школу. Дай его код учителя классному руководителю.</string>
+    <string name="school_no_classes_title">Пока нет классов</string>
+    <string name="school_no_classes_text">Создай класс здесь или дай учителям код школы ниже. Они вводят его, когда создают класс.</string>
+    <string name="school_code">Код школы</string>
+    <string name="school_code_hint">Для учителей: они вводят его при создании класса, и класс попадает в школу.</string>
+    <string name="admin_code">Код админа</string>
+    <string name="admin_code_hint">Только для других админов. Любой с этим кодом может управлять всеми классами школы.</string>
+    <string name="school_admins">Админы (%1$d)</string>
+    <string name="leave_school_button">Выйти из школы</string>
+    <string name="confirm_renew_school">Создать новый код школы? Старый перестанет работать. Классы, которые уже в школе, останутся.</string>
+    <string name="confirm_renew_admin">Создать новый код админа? Старый перестанет работать. Админы, которые уже в школе, останутся.</string>
+    <string name="confirm_remove_admin">Убрать %1$s из админов этой школы?</string>
+    <string name="confirm_leave_school">Выйти из этой школы на этом устройстве? У других админов она останется.</string>
+    <string name="confirm_leave_last_admin">Других админов у школы нет. Если ты выйдешь, никто больше не сможет управлять школой. Всё равно выйти?</string>
+
+    <!-- Online class: manage -->
+    <string name="manage_codes">Коды</string>
+    <string name="manage_student_code">Код класса</string>
+    <string name="manage_student_code_hint">Ученики вводят его один раз: Настроить → Ученик.</string>
+    <string name="manage_teacher_code">Код учителя</string>
+    <string name="manage_teacher_code_hint">Только для других учителей этого класса. Ещё он нужен, чтобы убрать устройство ученика из класса.</string>
+    <string name="manage_new_code">Новый код</string>
+    <string name="manage_teachers">Учителя (%1$d)</string>
+    <string name="manage_you">%1$s (ты)</string>
+    <string name="manage_online">В сети</string>
+    <string name="manage_offline">Не в сети</string>
+    <string name="confirm_remove_device">Убрать %1$s из класса? Устройство сможет снова войти по коду класса.</string>
+    <string name="confirm_remove_teacher">Убрать %1$s из учителей этого класса?</string>
+    <string name="confirm_leave_teacher">Выйти из этого класса на этом устройстве? У других учителей класс останется.</string>
+    <string name="confirm_leave_last_teacher">Других учителей у класса нет. Если ты выйдешь, никто больше не сможет управлять этим классом. Всё равно выйти?</string>
+    <string name="confirm_renew_student">Создать новый код класса? Старый перестанет работать. Устройства, которые уже в классе, останутся.</string>
+    <string name="confirm_renew_teacher">Создать новый код учителя? Старый перестанет работать. Учителя, которые уже в классе, останутся.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_language_system">Как на устройстве</string>
+    <string name="settings_theme">Оформление</string>
+    <string name="settings_theme_system">Как на устройстве</string>
+    <string name="settings_theme_light">Светлое</string>
+    <string name="settings_theme_dark">Тёмное</string>
+    <string name="settings_permissions_text">Проверь, что разрешено на этом устройстве, чтобы работали ссылки и «Всё внимание на меня».</string>
+    <string name="settings_permissions_button">Проверить разрешения</string>
+
+    <!-- Permissions (student devices) -->
+    <string name="permissions_title">Разрешения</string>
+    <string name="permissions_intro">Они нужны устройству ученика, чтобы приходили ссылки и работало «Всё внимание на меня». Это делается один раз на каждом устройстве.</string>
+    <string name="permission_notifications_title">Уведомления</string>
+    <string name="permission_notifications_text">Новые ссылки появляются, даже когда приложение закрыто.</string>
+    <string name="permission_overlay_title">Поверх других приложений</string>
+    <string name="permission_overlay_text">«Всё внимание на меня» может закрыть экран, какое бы приложение ни было открыто.</string>
+    <string name="permission_lock_title">Блокировка «Всё внимание на меня»</string>
+    <string name="permission_lock_text">Включи Easy Class Share в разделе «Специальные возможности». Тогда ученики не смогут открыть уведомления или настройки, пока включено «Всё внимание на меня».</string>
+    <string name="permission_lock_restricted">Переключатель серый? Открой «О приложении», нажми ⋮ вверху и выбери «Разрешить ограниченные настройки». Потом попробуй ещё раз.</string>
+    <string name="permission_open_app_info">Открыть «О приложении»</string>
+    <string name="permission_battery_title">Без ограничений батареи</string>
+    <string name="permission_battery_text">Android не останавливает приложение в фоне, и устройство остаётся на связи со своим классом.</string>
+    <string name="permission_allow">Разрешить</string>
+    <string name="permission_allowed">Разрешено</string>
+    <string name="permissions_done">Готово</string>
+    <string name="permissions_later">Позже</string>
+    <string name="lock_service_label">Easy Class Share: блокировка «Всё внимание на меня»</string>
+    <string name="lock_service_description">Позволяет сообщению учителя «Всё внимание на меня» закрыть весь экран, включая уведомления. Работает, только пока включено «Всё внимание на меня», и ничего не читает с экрана.</string>
+
+    <!-- Notifications -->
+    <string name="channel_class">Связь с классом</string>
+    <string name="channel_messages">Ссылки от учителя</string>
+    <string name="notif_connected_title">Подключено к классу</string>
+    <string name="notif_sound_on">Звук включён</string>
+    <string name="notif_sound_off">Звук выключен (так решил учитель)</string>
+    <string name="notif_new_message">Новое от %1$s</string>
+</resources>

@@ -15,6 +15,7 @@ import com.easyclassshare.app.online.ClassRepository
 import com.easyclassshare.app.online.LocalSetup
 import com.easyclassshare.app.online.Membership
 import com.easyclassshare.app.online.Role
+import com.easyclassshare.app.settings.AppSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -44,6 +45,10 @@ class ClassService : Service() {
     private var classIds: List<String> = emptyList()
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(AppSettings.wrap(base))
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -78,7 +83,8 @@ class ClassService : Service() {
     }
 
     private fun reportCanLock(classId: String) {
-        ClassRepository.reportStatus(classId, mapOf("canLock" to AttentionOverlay.canShow(this)))
+        val canLock = AttentionOverlay.canShow(this) || LockService.instance.value != null
+        ClassRepository.reportStatus(classId, mapOf("canLock" to canLock))
     }
 
     /** Keeps the device connected to all its classes at once. */
@@ -108,6 +114,10 @@ class ClassService : Service() {
             }
         }
         launch {
+            // The accessibility lock was switched on or off.
+            LockService.instance.collect { classIds.forEach { reportCanLock(it) } }
+        }
+        launch {
             batteryStatus().collect { (level, charging) ->
                 for (classId in classIds) {
                     ClassRepository.reportStatus(classId, mapOf("battery" to level, "charging" to charging))
@@ -117,18 +127,30 @@ class ClassService : Service() {
         launch {
             // "Eyes on me" from any class covers the screen.
             val perClass = classes.map { ClassRepository.attention(it.classId).catch { emit(null) } }
+            val anyAttention = combine(perClass) { all -> all.firstOrNull { it != null } }
             try {
-                combine(perClass) { all -> all.firstOrNull { it != null } }.collect { attention ->
+                combine(anyAttention, LockService.instance) { attention, lock -> attention to lock }.collect { (attention, lock) ->
                     if (attention == null) {
                         overlay.hide()
+                        lock?.hideAttention()
                         Notifications.cancelAttention(this@ClassService)
-                    } else if (!overlay.show(attention.text, attention.from) && !AppVisibility.isForeground) {
+                        return@collect
+                    }
+                    // The accessibility lock also covers the notification shade; the normal overlay is the fallback.
+                    val shown = if (lock != null && lock.showAttention(attention.text, attention.from)) {
+                        overlay.hide()
+                        true
+                    } else {
+                        overlay.show(attention.text, attention.from)
+                    }
+                    if (!shown && !AppVisibility.isForeground) {
                         // No permission to cover the screen: the app shows it when opened.
                         Notifications.attention(this@ClassService, attention)
                     }
                 }
             } finally {
                 overlay.hide()
+                LockService.instance.value?.hideAttention()
                 Notifications.cancelAttention(this@ClassService)
             }
         }
@@ -201,6 +223,7 @@ class ClassService : Service() {
 
     override fun onDestroy() {
         overlay.hide()
+        LockService.instance.value?.hideAttention()
         val stillMine = LocalSetup.memberships.value.filter { it.role == Role.STUDENT }.map { it.classId }
         classIds.filter { it in stillMine }.forEach { ClassRepository.markOffline(it) }
         scope.cancel()

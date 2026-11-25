@@ -89,6 +89,7 @@ import com.easyclassshare.app.ui.components.Notice
 import com.easyclassshare.app.ui.components.Panel
 import com.easyclassshare.app.ui.components.Tone
 import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.CardBg
 import com.easyclassshare.app.ui.theme.Brick
 import com.easyclassshare.app.ui.theme.BrickLight
 import com.easyclassshare.app.ui.theme.Chalk
@@ -314,7 +315,7 @@ private fun ControlTile(
     showArrow: Boolean,
     onClick: () -> Unit,
 ) {
-    val background = if (active) activeColor else Color.White
+    val background = if (active) activeColor else CardBg
     val content = if (active) Color.White else Ink
     val soft = if (active) Color.White.copy(alpha = 0.8f) else InkSoft
     Surface(
@@ -508,7 +509,7 @@ private fun SentCard(
 
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = CardBg,
         border = BorderStroke(1.dp, Line),
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -781,7 +782,7 @@ private fun TabletSummary(devices: List<DeviceInfo>, sound: SoundSettings, now: 
 private fun SummaryChip(text: String, color: Color) {
     Row(
         Modifier
-            .background(Color.White, RoundedCornerShape(50))
+            .background(CardBg, RoundedCornerShape(50))
             .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -824,7 +825,7 @@ private fun TabletRow(
 
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = CardBg,
         border = BorderStroke(1.dp, if (soundAllowed) Line else BrickLight),
         modifier = modifier.fillMaxWidth(),
     ) {

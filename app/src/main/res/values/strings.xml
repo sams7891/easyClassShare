@@ -85,7 +85,8 @@
     <string name="setup_create_subtitle">Create a class and get its codes</string>
     <string name="setup_cojoin_title">Join as a teacher</string>
     <string name="setup_cojoin_subtitle">Use a teacher code from a colleague</string>
-    <string name="setup_student_name">Your first name</string>
+    <string name="setup_device_name">Device name</string>
+    <string name="setup_device_name_hint">Your teacher sees this name and can change it later.</string>
     <string name="setup_name">Your name</string>
     <string name="setup_class_code">Class code</string>
     <string name="setup_teacher_code">Teacher code</string>
@@ -117,9 +118,9 @@
     <string name="student_leave_text">A teacher needs to enter the teacher code to take this device out of the class.</string>
     <string name="removed_notice">A teacher removed this device from %1$s.</string>
     <string name="removed_notice_unknown">A teacher removed this device from a class.</string>
-    <string name="lock_permission_title">One more setting</string>
-    <string name="lock_permission_text">Your teacher can put a message on the screen to get everyone\'s attention. For that, allow Easy Class Share to display over other apps.</string>
-    <string name="lock_permission_button">Open setting</string>
+    <string name="lock_permission_title">Some permissions are missing</string>
+    <string name="lock_permission_text">Without them, links or Eyes on me may not work on this device.</string>
+    <string name="lock_permission_button">Check permissions</string>
 
     <!-- Online class: teacher -->
     <string name="teacher_devices_summary">%1$d of %2$d devices online</string>
@@ -245,6 +246,37 @@
     <string name="confirm_leave_last_teacher">You are the only teacher. If you leave, nobody can manage this class any more. Leave anyway?</string>
     <string name="confirm_renew_student">Make a new class code? The old one stops working. Devices already in the class stay in.</string>
     <string name="confirm_renew_teacher">Make a new teacher code? The old one stops working. Teachers already in the class stay in.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">Same as the device</string>
+    <string name="settings_theme">Look</string>
+    <string name="settings_theme_system">Same as the device</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_permissions_text">Check what this device allows, so links and Eyes on me work.</string>
+    <string name="settings_permissions_button">Check permissions</string>
+
+    <!-- Permissions (student devices) -->
+    <string name="permissions_title">Permissions</string>
+    <string name="permissions_intro">A student device needs these so that links arrive and Eyes on me works. You only do this once on each device.</string>
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_text">New links show up even when the app is closed.</string>
+    <string name="permission_overlay_title">Display over other apps</string>
+    <string name="permission_overlay_text">Eyes on me can cover the screen, whatever app is open.</string>
+    <string name="permission_lock_title">Eyes on me lock</string>
+    <string name="permission_lock_text">Turn on Easy Class Share under Accessibility. Then students can\'t open the notifications or the settings while Eyes on me is on.</string>
+    <string name="permission_lock_restricted">Is the switch greyed out? Open App info, tap ⋮ at the top and choose Allow restricted settings. Then try again.</string>
+    <string name="permission_open_app_info">Open App info</string>
+    <string name="permission_battery_title">No battery limits</string>
+    <string name="permission_battery_text">Android doesn\'t stop the app in the background, so the device stays connected to its class.</string>
+    <string name="permission_allow">Allow</string>
+    <string name="permission_allowed">Allowed</string>
+    <string name="permissions_done">Done</string>
+    <string name="permissions_later">Later</string>
+    <string name="lock_service_label">Easy Class Share: Eyes on me lock</string>
+    <string name="lock_service_description">Lets the teacher\'s Eyes on me message cover the whole screen, the notifications included. It only does something while Eyes on me is on, and it does not read anything on the screen.</string>
 
     <!-- Notifications -->
     <string name="channel_class">Class connection</string>

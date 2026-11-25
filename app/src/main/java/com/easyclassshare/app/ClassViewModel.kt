@@ -242,9 +242,19 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     val knownTeacherName: String
         get() = memberships.value.lastOrNull { it.role != Role.STUDENT }?.name.orEmpty()
 
-    /** The student's name from another class, when a student device joins one more class. */
-    val knownStudentName: String
-        get() = memberships.value.lastOrNull { it.role == Role.STUDENT }?.name.orEmpty()
+    /**
+     * Suggested name for a student device: its name in another class, or else the name
+     * the device has in the Android settings (e.g. "Galaxy Tab A7").
+     */
+    val knownDeviceName: String
+        get() = memberships.value.lastOrNull { it.role == Role.STUDENT }?.name?.ifBlank { null }
+            ?: runCatching {
+                android.provider.Settings.Global.getString(
+                    getApplication<android.app.Application>().contentResolver,
+                    android.provider.Settings.Global.DEVICE_NAME,
+                )
+            }.getOrNull()?.ifBlank { null }
+            ?: android.os.Build.MODEL.orEmpty()
 
     fun createClass(className: String, teacherName: String, schoolCode: String, onDone: () -> Unit) = runAction {
         val m = ClassRepository.createClass(

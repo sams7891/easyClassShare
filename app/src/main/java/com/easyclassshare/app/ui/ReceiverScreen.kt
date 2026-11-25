@@ -56,6 +56,7 @@ import com.easyclassshare.app.ui.components.Pulsing
 import com.easyclassshare.app.ui.components.SoftButton
 import com.easyclassshare.app.ui.components.Tone
 import com.easyclassshare.app.ui.components.drawableIcon
+import com.easyclassshare.app.ui.theme.CardBg
 import com.easyclassshare.app.ui.theme.Ink
 import com.easyclassshare.app.ui.theme.InkSoft
 import com.easyclassshare.app.ui.theme.Line
@@ -191,7 +192,7 @@ internal fun ReceivedCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White, contentColor = Ink),
+        colors = CardDefaults.cardColors(containerColor = CardBg, contentColor = Ink),
         border = BorderStroke(if (isNewest) 2.dp else 1.dp, if (isNewest) Pencil else Line),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

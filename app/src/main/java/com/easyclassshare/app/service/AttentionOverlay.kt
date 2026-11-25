@@ -2,6 +2,7 @@ package com.easyclassshare.app.service
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.os.Build
@@ -17,9 +18,15 @@ import android.widget.TextView
 
 /**
  * The full-screen "Eyes on me" message, drawn over every app while a teacher has it on.
- * Needs the "Display over other apps" permission; without it [show] returns false.
+ *
+ * With the default [type] it needs the "Display over other apps" permission (without it
+ * [show] returns false). [LockService] uses TYPE_ACCESSIBILITY_OVERLAY instead, which also
+ * covers the status bar and the notification shade.
  */
-class AttentionOverlay(private val context: Context) {
+class AttentionOverlay(
+    private val context: Context,
+    private val type: Int = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+) {
     private val windowManager = context.getSystemService(WindowManager::class.java)
     private var view: View? = null
     private var title: TextView? = null
@@ -28,7 +35,7 @@ class AttentionOverlay(private val context: Context) {
     val isShowing: Boolean get() = view != null
 
     fun show(text: String, from: String): Boolean {
-        if (!canShow(context)) return false
+        if (type == WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY && !canShow(context)) return false
         val existing = view
         if (existing != null) {
             title?.text = text
@@ -40,8 +47,9 @@ class AttentionOverlay(private val context: Context) {
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            type,
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
             PixelFormat.OPAQUE,
         )
@@ -96,6 +104,16 @@ class AttentionOverlay(private val context: Context) {
             // Swallow the back button while the teacher has the screen.
             override fun dispatchKeyEvent(event: KeyEvent): Boolean =
                 if (event.keyCode == KeyEvent.KEYCODE_BACK) true else super.dispatchKeyEvent(event)
+
+            // The notification shade takes the focus when it is pulled down. Up to Android 11
+            // any app may close it again; newer versions only allow that to LockService.
+            override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+                super.onWindowFocusChanged(hasWindowFocus)
+                if (!hasWindowFocus && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    @Suppress("DEPRECATION")
+                    runCatching { context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)) }
+                }
+            }
         }.apply {
             setBackgroundColor(BACKGROUND)
             isClickable = true

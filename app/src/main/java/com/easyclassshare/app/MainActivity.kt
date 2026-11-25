@@ -1,7 +1,10 @@
 package com.easyclassshare.app
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -18,17 +21,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.lifecycleScope
 import com.easyclassshare.app.data.LinkUtils
 import com.easyclassshare.app.online.LocalSetup
 import com.easyclassshare.app.online.Role
 import com.easyclassshare.app.service.ClassService
+import com.easyclassshare.app.service.DevicePermissions
 import com.easyclassshare.app.service.Notifications
+import com.easyclassshare.app.settings.AppSettings
 import com.easyclassshare.app.ui.HomeScreen
 import com.easyclassshare.app.ui.ManageClassScreen
+import com.easyclassshare.app.ui.PermissionsScreen
 import com.easyclassshare.app.ui.ReceiverScreen
 import com.easyclassshare.app.ui.SchoolScreen
 import com.easyclassshare.app.ui.SenderScreen
+import com.easyclassshare.app.ui.SettingsScreen
 import com.easyclassshare.app.ui.SetupMode
 import com.easyclassshare.app.ui.StartScreen
 import com.easyclassshare.app.ui.SetupScreen
@@ -36,17 +45,27 @@ import com.easyclassshare.app.ui.StudentClassScreen
 import com.easyclassshare.app.ui.TeacherClassScreen
 import com.easyclassshare.app.ui.openLink
 import com.easyclassshare.app.ui.theme.EasyClassShareTheme
+import com.easyclassshare.app.ui.theme.isDark
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val vm: ClassShareViewModel by viewModels()
     private val cvm: ClassViewModel by viewModels()
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppSettings.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // A new language needs the screens built again; the open screen stays.
+        lifecycleScope.launch { AppSettings.language.drop(1).collect { recreate() } }
         // Only on a fresh start - not again after a screen rotation.
         if (savedInstanceState == null) {
             vm.screen = when {
+                LocalSetup.isStudentDevice && !DevicePermissions.allGranted(this) -> Screen.PERMISSIONS
                 LocalSetup.isStudentDevice -> Screen.STUDENT
                 LocalSetup.memberships.value.isNotEmpty() -> Screen.START
                 else -> Screen.HOME
@@ -55,7 +74,14 @@ class MainActivity : ComponentActivity() {
             handleOpenMessage(intent)
         }
         setContent {
-            EasyClassShareTheme { EasyClassShareApp(vm, cvm) }
+            val themeMode by AppSettings.theme.collectAsState()
+            val dark = isDark(themeMode)
+            // Status bar icons follow the app's own light/dark choice.
+            LaunchedEffect(dark) {
+                val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            }
+            EasyClassShareTheme(dark) { EasyClassShareApp(vm, cvm) }
         }
     }
 
@@ -118,12 +144,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
+    val context = LocalContext.current
     val memberships by cvm.memberships.collectAsState()
     val removedFrom by cvm.removedFrom.collectAsState()
     val openClass by cvm.current.collectAsState()
     val openSchool by cvm.openSchool.collectAsState()
     val isSuperAdmin by cvm.isSuperAdmin.collectAsState()
     var setupMode by rememberSaveable { mutableStateOf(SetupMode.NEW) }
+    var settingsReturn by rememberSaveable { mutableStateOf(Screen.HOME) }
 
     val isStudent = memberships.any { it.role == Role.STUDENT }
     val isStaff = memberships.any { it.role != Role.STUDENT } || isSuperAdmin
@@ -138,6 +166,10 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
         vm.screen = Screen.START
     }
     val backFromClass = { vm.screen = if (cvm.closeClass()) Screen.SCHOOL else Screen.START }
+    val openSettings = {
+        settingsReturn = vm.screen
+        vm.screen = Screen.SETTINGS
+    }
     val openSetup = { mode: SetupMode ->
         cvm.clearError()
         setupMode = mode
@@ -151,7 +183,8 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
             screen == Screen.HOME && home != Screen.HOME -> home
             screen == Screen.STUDENT && !isStudent -> home
             screen == Screen.START && !isStaff -> home
-            isStudent && screen != Screen.STUDENT && screen != Screen.SETUP -> Screen.STUDENT
+            isStudent && screen !in setOf(Screen.STUDENT, Screen.SETUP, Screen.SETTINGS, Screen.PERMISSIONS) ->
+                Screen.STUDENT
             screen in setOf(Screen.CLASS, Screen.MANAGE) && openClass == null ->
                 if (openSchool != null) Screen.SCHOOL else home
             screen == Screen.SCHOOL && openSchool == null -> home
@@ -165,6 +198,7 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
             Screen.HOME -> HomeScreen(
                 showClassSetup = cvm.isConfigured,
                 onSetupClick = { openSetup(SetupMode.NEW) },
+                onSettings = openSettings,
                 onSendClick = { vm.screen = Screen.SEND },
                 onReceiveClick = { vm.screen = Screen.RECEIVE },
             )
@@ -184,18 +218,41 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
                     vm.screen = when {
                         cvm.current.value != null -> Screen.CLASS
                         cvm.openSchool.value != null -> Screen.SCHOOL
+                        LocalSetup.isStudentDevice && !DevicePermissions.allGranted(context) -> Screen.PERMISSIONS
                         LocalSetup.isStudentDevice -> Screen.STUDENT
                         else -> Screen.START
                     }
                 },
             )
-            Screen.STUDENT -> StudentClassScreen(cvm, onJoinAnother = { openSetup(SetupMode.ADD_STUDENT) })
+            Screen.STUDENT -> StudentClassScreen(
+                cvm,
+                onJoinAnother = { openSetup(SetupMode.ADD_STUDENT) },
+                onSettings = openSettings,
+                onPermissions = { vm.screen = Screen.PERMISSIONS },
+            )
+            Screen.SETTINGS -> {
+                val back = { vm.screen = settingsReturn }
+                BackHandler(onBack = back)
+                SettingsScreen(
+                    onBack = back,
+                    onPermissions = if (isStudent) {
+                        { vm.screen = Screen.PERMISSIONS }
+                    } else {
+                        null
+                    },
+                )
+            }
+            Screen.PERMISSIONS -> {
+                BackHandler(onBack = goHome)
+                PermissionsScreen(onDone = goHome, onBack = goHome)
+            }
             Screen.START -> StartScreen(
                 cvm,
                 onOpenClass = { cvm.openClass(it); vm.screen = Screen.CLASS },
                 onOpenSchool = { cvm.openSchool(it); vm.screen = Screen.SCHOOL },
                 onAdd = { openSetup(SetupMode.ADD_STAFF) },
                 onWifiMode = { vm.screen = Screen.SEND },
+                onSettings = openSettings,
             )
             Screen.SCHOOL -> {
                 BackHandler(onBack = goStart)

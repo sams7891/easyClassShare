@@ -4,6 +4,24 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+### Added
+- **Settings** (gear icon on the start, home and student screens): app
+  language and light or dark look.
+- **Languages**: Latvian and Russian next to English, or the device language.
+- **Dark mode**, following the device or chosen in Settings.
+- **Permissions screen** for student devices, right after joining and whenever
+  something is missing: notifications, display over other apps, the Eyes on me
+  lock and no battery limits.
+- **Eyes on me lock**: an optional accessibility service that covers the
+  notification shade too and closes it (and the Settings app) while Eyes on me
+  is on.
+
+### Changed
+- Student devices are named after the device (pre-filled from the device name)
+  instead of asking for the student's first name. Teachers and admins still
+  enter their own names.
+
 ## [1.3.0] - 2026-11-24
 ### Added
 - **Online classes** (Firebase): one-time setup per device with a class code;

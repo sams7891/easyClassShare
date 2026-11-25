@@ -1,16 +1,7 @@
 package com.easyclassshare.app.ui
 
-import android.Manifest
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -50,12 +41,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.easyclassshare.app.ClassViewModel
 import com.easyclassshare.app.R
 import com.easyclassshare.app.online.Attention
-import com.easyclassshare.app.service.AttentionOverlay
+import com.easyclassshare.app.service.DevicePermissions
 import com.easyclassshare.app.ui.components.AppTopBar
 import com.easyclassshare.app.ui.components.Notice
 import com.easyclassshare.app.ui.components.Panel
@@ -63,13 +53,19 @@ import com.easyclassshare.app.ui.components.SoftButton
 import com.easyclassshare.app.ui.components.Tone
 import com.easyclassshare.app.ui.components.drawableIcon
 import com.easyclassshare.app.ui.theme.Brick
+import com.easyclassshare.app.ui.theme.AttentionBackground
 import com.easyclassshare.app.ui.theme.Ink
 import com.easyclassshare.app.ui.theme.InkSoft
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /** What a student device shows after the one-time setup: one inbox for all its classes. */
 @Composable
-fun StudentClassScreen(cvm: ClassViewModel, onJoinAnother: () -> Unit) {
+fun StudentClassScreen(
+    cvm: ClassViewModel,
+    onJoinAnother: () -> Unit,
+    onSettings: () -> Unit,
+    onPermissions: () -> Unit,
+) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val classes by cvm.studentClasses.collectAsState()
@@ -81,24 +77,13 @@ fun StudentClassScreen(cvm: ClassViewModel, onJoinAnother: () -> Unit) {
     val copiedText = stringResource(R.string.copied)
     val openFailedText = stringResource(R.string.could_not_open)
     var showLeave by rememberSaveable { mutableStateOf(false) }
-    var canLock by remember { mutableStateOf(AttentionOverlay.canShow(context)) }
+    var allAllowed by remember { mutableStateOf(DevicePermissions.allGranted(context)) }
     val severalClasses = classes.size > 1
 
-    // Checked again when coming back from the "Display over other apps" settings page.
+    // Checked again when coming back from a settings page.
     LifecycleResumeEffect(Unit) {
-        canLock = AttentionOverlay.canShow(context)
+        allAllowed = DevicePermissions.allGranted(context)
         onPauseOrDispose { }
-    }
-
-    // New links show up as notifications while the app is in the background.
-    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
     }
 
     LaunchedEffect(inbox.firstOrNull()?.message?.id) {
@@ -125,7 +110,11 @@ fun StudentClassScreen(cvm: ClassViewModel, onJoinAnother: () -> Unit) {
         myName ?: classes.firstOrNull()?.name
     }
     Box(Modifier.fillMaxSize()) {
-        Scaffold(topBar = { AppTopBar(title, onBack = null, subtitle = subtitle) }) { padding ->
+        Scaffold(
+            topBar = {
+                AppTopBar(title, onBack = null, subtitle = subtitle, actions = { SettingsButton(onSettings) })
+            },
+        ) { padding ->
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -139,8 +128,8 @@ fun StudentClassScreen(cvm: ClassViewModel, onJoinAnother: () -> Unit) {
                         Notice(stringResource(R.string.student_sound_off), Tone.BAD, drawableIcon(R.drawable.ic_volume_off))
                     }
                 }
-                if (!canLock) {
-                    item(key = "lock") { LockPermissionPanel() }
+                if (!allAllowed) {
+                    item(key = "permissions") { MissingPermissionsPanel(onPermissions) }
                 }
                 if (inbox.isEmpty()) {
                     item(key = "empty") { EmptyInbox() }
@@ -223,8 +212,7 @@ fun StudentClassScreen(cvm: ClassViewModel, onJoinAnother: () -> Unit) {
 private fun itemKey(classId: String, messageId: String) = "$classId/$messageId"
 
 @Composable
-private fun LockPermissionPanel() {
-    val context = LocalContext.current
+private fun MissingPermissionsPanel(onPermissions: () -> Unit) {
     Panel {
         Text(stringResource(R.string.lock_permission_title), style = MaterialTheme.typography.titleMedium)
         Text(
@@ -235,17 +223,7 @@ private fun LockPermissionPanel() {
         Row {
             SoftButton(
                 stringResource(R.string.lock_permission_button),
-                onClick = {
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:${context.packageName}"),
-                    )
-                    try {
-                        context.startActivity(intent)
-                    } catch (e: ActivityNotFoundException) {
-                        context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-                    }
-                },
+                onClick = onPermissions,
                 icon = drawableIcon(R.drawable.ic_eye),
             )
         }
@@ -259,7 +237,7 @@ private fun AttentionScreen(attention: Attention) {
     Box(
         Modifier
             .fillMaxSize()
-            .background(Ink)
+            .background(AttentionBackground)
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { },
         contentAlignment = Alignment.Center,
     ) {
