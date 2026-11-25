@@ -4,25 +4,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] - in 1.3.0-beta.7
-### Added
-- **Settings** (gear icon on the start, home and student screens): app
-  language and light or dark look.
-- **Languages**: Latvian and Russian next to English, or the device language.
-- **Dark mode**, following the device or chosen in Settings.
-- **Permissions screen** for student devices, right after joining and whenever
-  something is missing: notifications, display over other apps, the Eyes on me
-  lock and no battery limits.
-- **Eyes on me lock**: an optional accessibility service that covers the
-  notification shade too and closes it (and the Settings app) while Eyes on me
-  is on.
-
-### Changed
-- Student devices are named after the device (pre-filled from the device name)
-  instead of asking for the student's first name. Teachers and admins still
-  enter their own names.
-
-## [1.3.0] - 2026-11-24
+## [1.3.0] - 2026-11-25
 ### Added
 - **Online classes** (Firebase): one-time setup per device with a class code;
   sharing works across different networks and in the background.
@@ -61,6 +43,16 @@ project uses [Semantic Versioning](https://semver.org/).
 - **Copy** buttons for all codes.
 - **Super admin**: one device (set in the Firebase console) sees and manages
   every school.
+- **Settings** (gear icon on the start, home and student screens): app
+  language and light or dark look.
+- **Languages**: Latvian and Russian next to English, or the device language.
+- **Dark mode**, following the device or chosen in Settings.
+- **Permissions screen** for student devices, right after joining and whenever
+  something is missing: notifications, display over other apps, the Eyes on me
+  lock and no battery limits.
+- **Eyes on me lock**: an optional accessibility service that covers the
+  notification shade too and closes it (and the Settings app) while Eyes on me
+  is on.
 
 ### Removed
 - The chime when a message arrives while the app is open.
@@ -70,6 +62,9 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - The same-Wi-Fi mode is still there for quick sharing without internet.
+- Student devices are named after the device (pre-filled from the device name)
+  instead of asking for the student's first name. Teachers and admins still
+  enter their own names.
 
 ## [1.2.1] - 2026-11-23
 ### Fixed
