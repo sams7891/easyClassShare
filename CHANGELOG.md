@@ -12,6 +12,9 @@ project uses [Semantic Versioning](https://semver.org/).
   (was up to a second).
 - The "Connected to your class" notification switches language right away when
   the language is changed in Settings.
+- Longer codes (teacher, school and admin codes) are no longer cut off: codes
+  shrink to fit next to the Copy button and are shown in two groups
+  (e.g. `ABCD EFGH`). Copy still copies the code without the space.
 
 ## [1.3.0] - 2026-11-25
 ### Added

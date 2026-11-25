@@ -3,6 +3,7 @@ package com.easyclassshare.app.ui
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.res.stringResource
@@ -130,7 +132,11 @@ internal fun PasteClearRow(draft: String, onDraftChange: (String) -> Unit) {
     }
 }
 
-/** A join code in large letters with a Copy button. Tapping the code copies it too. */
+/**
+ * A join code in large letters with a Copy button. Tapping the code copies it too.
+ * Shown in two groups ("ABCD EFGH") and made smaller when it doesn't fit next to the button,
+ * so the longer teacher and admin codes are never cut off. Copying gives the code without the space.
+ */
 @Composable
 internal fun CopyableCode(code: String?) {
     val clipboard = LocalClipboardManager.current
@@ -142,18 +148,24 @@ internal fun CopyableCode(code: String?) {
             Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
         }
     }
+    val shown = code?.let(::groupCode) ?: "…"
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            code ?: "…",
-            fontSize = 34.sp,
-            letterSpacing = 4.sp,
-            fontFamily = FontFamily.Monospace,
-            color = Chalk,
-            maxLines = 1,
-            modifier = Modifier
-                .weight(1f, fill = false)
-                .clickable(enabled = code != null, onClick = copy),
-        )
+        BoxWithConstraints(Modifier.weight(1f)) {
+            // A monospace letter plus its spacing is about 0.75 of the font size wide.
+            val fontScale = LocalDensity.current.fontScale
+            val fitting = maxWidth.value / (shown.length.coerceAtLeast(4) * 0.75f) / fontScale
+            val size = fitting.coerceIn(MIN_CODE_SIZE, MAX_CODE_SIZE)
+            Text(
+                shown,
+                fontSize = size.sp,
+                letterSpacing = (size * 0.12f).sp,
+                fontFamily = FontFamily.Monospace,
+                color = Chalk,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.clickable(enabled = code != null, onClick = copy),
+            )
+        }
         Spacer(Modifier.width(12.dp))
         SoftButton(
             stringResource(R.string.copy),
@@ -163,6 +175,16 @@ internal fun CopyableCode(code: String?) {
         )
     }
 }
+
+/** "ABCDEFGH" -> "ABCD EFGH": two halves are easier to read out and type. */
+internal fun groupCode(code: String): String {
+    if (code.length < 6) return code
+    val half = (code.length + 1) / 2
+    return code.substring(0, half) + " " + code.substring(half)
+}
+
+private const val MAX_CODE_SIZE = 34f
+private const val MIN_CODE_SIZE = 18f
 
 /** Shows the view model's current error, if there is one. */
 @Composable
