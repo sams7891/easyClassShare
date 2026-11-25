@@ -90,8 +90,8 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-') }}
           generate_release_notes: true
           body: |
-            ## 📲 Install on a tablet
-            1. Open this page on the tablet and tap the **.apk** file below.
+            ## 📲 Install on a device
+            1. Open this page on the device and tap the **.apk** file below.
             2. If asked, allow your browser to *install unknown apps*.
             3. Tap **Install**. Done! 🎉
 

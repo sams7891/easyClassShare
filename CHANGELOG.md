@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [Unreleased] - in 1.3.0-beta.7
 ### Added
 - **Settings** (gear icon on the start, home and student screens): app
   language and light or dark look.
