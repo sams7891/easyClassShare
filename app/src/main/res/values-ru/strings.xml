@@ -289,4 +289,36 @@
     <string name="notif_sound_on">Звук включён</string>
     <string name="notif_sound_off">Звук выключен (так решил учитель)</string>
     <string name="notif_new_message">Новое от %1$s</string>
+
+    <!-- Open the app on every device -->
+    <string name="open_app_on_devices">Открыть приложение на всех устройствах</string>
+    <string name="open_app_sent">Приложение открывается на устройствах учеников</string>
+    <string name="notif_open_app">Учитель просит открыть Easy Class Share</string>
+
+    <!-- Renaming classes and schools -->
+    <string name="rename_button">Переименовать</string>
+    <string name="rename_class_panel">Название класса</string>
+    <string name="rename_class_title">Переименовать класс</string>
+    <string name="rename_class_text">Новое название увидят все учителя и устройства учеников.</string>
+    <string name="rename_school_panel">Название школы</string>
+    <string name="rename_school_title">Переименовать школу</string>
+    <string name="rename_school_text">Новое название увидят все администраторы и учителя школы.</string>
+
+    <!-- App updates -->
+    <string name="update_title">Обновления приложения</string>
+    <string name="update_installed">Установлена версия %1$s</string>
+    <string name="update_check">Проверить обновления</string>
+    <string name="update_checking">Проверка…</string>
+    <string name="update_up_to_date">Это самая новая версия.</string>
+    <string name="update_available_title">Доступна версия %1$s</string>
+    <string name="update_available_text">На этом устройстве версия %1$s. Скачать новую версию сейчас? Потом Android попросит подтвердить обновление.</string>
+    <string name="update_button">Обновить</string>
+    <string name="update_later">Позже</string>
+    <string name="update_hide">Скрыть</string>
+    <string name="update_downloading">Загрузка обновления…</string>
+    <string name="update_ready_title">Версия %1$s загружена</string>
+    <string name="update_ready_text">Нажми «Установить», затем «Обновить». Если Android сначала спросит, разреши Easy Class Share устанавливать приложения и вернись.</string>
+    <string name="update_install">Установить</string>
+    <string name="update_failed">Обновить не удалось. Проверь подключение к интернету и попробуй ещё раз.</string>
+    <string name="update_notification_text">Нажми, чтобы обновить приложение.</string>
 </resources>

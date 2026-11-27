@@ -227,12 +227,23 @@ private fun SchoolSettingsTab(cvm: ClassViewModel) {
     val admins by cvm.schoolAdmins.collectAsState()
     val myUid by cvm.myUid.collectAsState()
     var confirm by remember { mutableStateOf<SchoolConfirm?>(null) }
+    val school by cvm.openSchool.collectAsState()
+    val schoolName by cvm.schoolName.collectAsState()
+    var renaming by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item(key = "name") {
+            NamePanel(
+                title = stringResource(R.string.rename_school_panel),
+                name = schoolName ?: school?.name?.ifBlank { null } ?: stringResource(R.string.school_default_name),
+                enabled = !cvm.busy && schoolName != null,
+                onRename = { cvm.clearError(); renaming = true },
+            )
+        }
         item(key = "codes") {
             Panel {
                 Text(stringResource(R.string.manage_codes), style = MaterialTheme.typography.titleLarge)
@@ -273,6 +284,19 @@ private fun SchoolSettingsTab(cvm: ClassViewModel) {
                 }
             }
         }
+    }
+
+    if (renaming) {
+        RenameDialog(
+            title = stringResource(R.string.rename_school_title),
+            text = stringResource(R.string.rename_school_text),
+            label = stringResource(R.string.setup_school_name),
+            icon = drawableIcon(R.drawable.ic_school),
+            initial = schoolName.orEmpty(),
+            maxLength = 60,
+            onSave = { cvm.renameSchool(it); renaming = false },
+            onDismiss = { renaming = false },
+        )
     }
 
     confirm?.let { pending ->

@@ -59,9 +59,10 @@ gives the device a new ID, and it is no longer super admin (see below).
 ### Permissions on student devices
 A student device needs a few permissions so that links arrive and *Eyes on me*
 works. The **Permissions** screen lists them, each with an **Allow** button and
-a tick once it is on. It appears right after joining a class and every time the
-app opens while something is missing (also under **Settings → Check
-permissions**):
+a tick once it is on. It appears right after joining a class. If something is
+missing later (for example Android switched the Eyes on me lock off), the
+student screen shows a reminder with a button to it, and it is always under
+**Settings → Check permissions**:
 
 | Permission | Why |
 |---|---|
@@ -126,14 +127,19 @@ The teacher screen has two status tiles at the top and two tabs:
   and the **Eyes on me lock** keeps students out of the notifications and the
   settings meanwhile (see *Permissions on student devices*). The Devices tab
   shows which devices can't show it yet.
+- **⋮ → Open the app on all devices**: brings Easy Class Share to the front on
+  every student device, whatever app is open. This needs *Display over other
+  apps* on the device; without it the device gets a notification to tap.
 - **Share** tab: type or paste a link, choose **To: Whole class**, **Online
   devices only**, or single devices, and send. Every shared item shows **"Opened by 18 of 24"**; tap it
   to see who hasn't opened it yet. Shared items can be deleted from all devices.
 - **Devices** tab: every device with online / last seen, battery level, and its
   own sound switch. The ⋮ menu renames a device, sends something only to that
   device, or removes it from the class.
-- **Class settings** (gear icon): class and teacher codes (renewable), the
-  teachers of the class, and leaving the class.
+- **Class settings** (gear icon): the class name (**Rename**), class and teacher
+  codes (renewable), the teachers of the class, and leaving the class.
+
+School admins rename a school under **School settings → School name → Rename**.
 
 ### How the sound lock works
 While sound is off for a device, the app sets the device's volume (media,
@@ -155,9 +161,28 @@ opens **Settings**:
 - **Language:** English, Latviešu, Русский, or the same as the device. The
   change shows immediately.
 - **Look:** light, dark, or the same as the device.
+- **App updates:** shows the installed version; **Check for updates** looks for a
+  newer release (see *Updating the app*).
 - **Check permissions** (student devices only): opens the Permissions screen.
 
 Settings are stored on each device.
+
+## 🔄 Updating the app
+The app looks for a newer release on the
+[Releases page](https://github.com/sams7891/easyClassShare/releases) when it
+opens (at most every 6 hours) and asks *Version X is available*: **Update**
+downloads it and opens Android's installer, where you tap **Update** once more.
+Student devices also show a notification. **Later** stops asking for that
+version (Settings still offers it).
+
+- Android never lets an app update itself without a tap; installing without any
+  question needs a device-management (MDM) setup.
+- The first time, Android asks to allow Easy Class Share to *install unknown
+  apps*: switch it on, go back and tap **Install**.
+- Only releases built by GitHub Actions (signed with the project key) can be
+  installed over the app. A build from Android Studio has another key: remove it
+  first, then install the release.
+- Pre-releases (tags like `v1.4.0-beta.1`) are never offered.
 
 ## 🏫 Online classes: Firebase
 ### One-time Firebase setup (for whoever builds the app)
@@ -247,6 +272,7 @@ app/src/main/java/com/easyclassshare/app/
 ├── service/                     # student background service, sound lock, Eyes on me
 │                                #   overlay and lock (LockService), permissions, boot start
 ├── settings/AppSettings.kt      # language and light/dark choice
+├── update/AppUpdater.kt         # app updates from the GitHub releases
 └── ui/                          # screens + theme/components
 app/src/main/res/values-lv/      # Latvian texts
 app/src/main/res/values-ru/      # Russian texts

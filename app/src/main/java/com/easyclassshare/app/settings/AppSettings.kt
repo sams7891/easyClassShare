@@ -65,21 +65,33 @@ object AppSettings {
     }
 
     /**
-     * Returns [base] with the chosen app language, for attachBaseContext of the
+     * Returns [base] with the chosen app language and light/dark look, for attachBaseContext of the
      * activity, the application and the services. Unchanged when the device language is used.
      */
     fun wrap(base: Context): Context {
         load(base)
         val tag = _language.value.tag
+        val night = when (_theme.value) {
+            ThemeMode.SYSTEM -> null
+            ThemeMode.LIGHT -> Configuration.UI_MODE_NIGHT_NO
+            ThemeMode.DARK -> Configuration.UI_MODE_NIGHT_YES
+        }
         if (tag.isEmpty()) {
             // Back to the device language, also for dates and times ("5 minutes ago").
             base.resources.configuration.locales[0]?.let { Locale.setDefault(it) }
-            return base
         }
-        val locale = Locale.forLanguageTag(tag)
-        Locale.setDefault(locale)
+        if (tag.isEmpty() && night == null) return base
         val config = Configuration(base.resources.configuration)
-        config.setLocales(LocaleList(locale))
+        if (tag.isNotEmpty()) {
+            val locale = Locale.forLanguageTag(tag)
+            Locale.setDefault(locale)
+            config.setLocales(LocaleList(locale))
+        }
+        // Light or dark chosen in Settings: the window background behind the screens
+        // (values-night) follows it too, so it doesn't flash light between screens.
+        if (night != null) {
+            config.uiMode = (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or night
+        }
         return base.createConfigurationContext(config)
     }
 

@@ -210,6 +210,14 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
                 }.merge()
             }.collect { (id, name) -> if (name != null) LocalSetup.updateClassName(id, name) }
         }
+        // A teacher's classes are grouped by school on the start screen: follow school renames.
+        viewModelScope.launch {
+            memberships.flatMapLatest { list ->
+                list.filter { it.role == Role.TEACHER }.map { m ->
+                    ClassRepository.schoolNameOfClass(m.classId).catch { }.map { m.classId to it }
+                }.merge()
+            }.collect { (id, name) -> if (name != null) LocalSetup.updateSchoolName(id, name) }
+        }
         // Close what is open when the device is no longer part of it.
         viewModelScope.launch {
             memberships.collect { list ->
@@ -426,16 +434,16 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteMessage(message: SentMessage) = teacherAction { ClassRepository.deleteMessage(it, message) }
 
-    fun setClassSound(allowed: Boolean) = teacherAction { ClassRepository.setClassSound(it, allowed) }
+    fun setClassSound(allowed: Boolean) = quickAction { ClassRepository.setClassSound(it, allowed) }
 
     /** Mutes the whole class; sound comes back by itself after [minutes]. */
-    fun muteFor(minutes: Int) = teacherAction {
+    fun muteFor(minutes: Int) = quickAction {
         val until = System.currentTimeMillis() + serverOffset.value + minutes * 60_000L
         ClassRepository.setClassSound(it, allowed = false, mutedUntil = until)
     }
 
     fun setDeviceSound(deviceUid: String, allowed: Boolean) =
-        teacherAction { ClassRepository.setDeviceSound(it, deviceUid, allowed) }
+        quickAction { ClassRepository.setDeviceSound(it, deviceUid, allowed) }
 
     fun renameDevice(deviceUid: String, name: String) {
         val clean = name.trim().take(MAX_NAME)
@@ -443,10 +451,25 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
         teacherAction { ClassRepository.renameDevice(it, deviceUid, clean) }
     }
 
-    /** Puts "Eyes on me" on every student device of the class, or takes it away. */
-    fun setAttention(on: Boolean, text: String) = teacherAction {
-        val m = current.value ?: return@teacherAction
-        ClassRepository.setAttention(it, if (on) Attention(text, m.name) else null)
+    /**
+     * Puts "Eyes on me" on every student device of the class, or takes it away. Each device
+     * shows the message in its own language; [text] is only for older app versions.
+     */
+    fun setAttention(on: Boolean, text: String) {
+        val name = current.value?.name ?: return
+        quickAction { ClassRepository.setAttention(it, if (on) Attention(text, name) else null) }
+    }
+
+    /** Brings the app to the front on every student device of the open class. */
+    fun openAppOnDevices(onSent: () -> Unit) {
+        val name = current.value?.name ?: return
+        quickAction(onSent) { ClassRepository.requestOpenApp(it, name) }
+    }
+
+    fun renameClass(name: String) {
+        val clean = name.trim().take(MAX_NAME)
+        if (clean.isEmpty()) return
+        teacherAction { ClassRepository.renameClass(it, clean) }
     }
 
     fun removeDevice(deviceUid: String) = teacherAction { ClassRepository.removeDevice(it, deviceUid) }
@@ -460,6 +483,27 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
         block(m.classId)
     }
 
+    /**
+     * For the controls a teacher needs at any moment (sound, Eyes on me): not blocked while
+     * another action runs. Firebase shows the change at once and sends it as soon as it can.
+     */
+    private fun quickAction(onDone: () -> Unit = {}, block: suspend (classId: String) -> Unit) {
+        val m = current.value ?: return
+        error = null
+        viewModelScope.launch {
+            try {
+                withTimeout(ACTION_TIMEOUT_MS) { block(m.classId) }
+                onDone()
+            } catch (e: TimeoutCancellationException) {
+                error = R.string.online_error_connection
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                error = errorFor(e)
+            }
+        }
+    }
+
     // ---------------------------------------------------------------- school admin
 
     fun createSchoolClass(className: String, onDone: () -> Unit) = runAction {
@@ -471,6 +515,15 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun renewSchoolCode(kind: CodeKind) = schoolAction { ClassRepository.renewSchoolCode(it, kind) }
+
+    fun renameSchool(name: String) {
+        val clean = name.trim().take(MAX_SCHOOL_NAME)
+        if (clean.isEmpty()) return
+        schoolAction { schoolId ->
+            ClassRepository.renameSchool(schoolId, clean)
+            _openSchool.value?.let { if (it.schoolId == schoolId) _openSchool.value = it.copy(name = clean) }
+        }
+    }
 
     fun removeAdmin(adminUid: String) = schoolAction { ClassRepository.removeAdmin(it, adminUid) }
 
@@ -498,16 +551,19 @@ class ClassViewModel(application: Application) : AndroidViewModel(application) {
                     JoinException.Reason.WRONG_KIND_OF_CODE -> R.string.online_error_wrong_code
                 }
             } catch (e: Exception) {
-                error = if (e.message?.contains("permission denied", ignoreCase = true) == true) {
-                    R.string.online_error_denied
-                } else {
-                    R.string.online_error_generic
-                }
+                error = errorFor(e)
             } finally {
                 busy = false
             }
         }
     }
+
+    private fun errorFor(e: Exception): Int =
+        if (e.message?.contains("permission denied", ignoreCase = true) == true) {
+            R.string.online_error_denied
+        } else {
+            R.string.online_error_generic
+        }
 
     companion object {
         private const val STOP_TIMEOUT_MS = 5_000L

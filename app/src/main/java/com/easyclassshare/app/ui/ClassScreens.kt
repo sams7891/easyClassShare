@@ -247,7 +247,8 @@ private fun AttentionScreen(attention: Attention) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                attention.text,
+                // In this device's language, not the teacher's.
+                stringResource(R.string.attention_default_text),
                 color = Color.White,
                 fontSize = 40.sp,
                 lineHeight = 48.sp,

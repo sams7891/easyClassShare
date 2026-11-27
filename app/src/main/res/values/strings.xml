@@ -285,4 +285,36 @@
     <string name="notif_sound_on">Sound is on</string>
     <string name="notif_sound_off">Sound is off (set by the teacher)</string>
     <string name="notif_new_message">New from %1$s</string>
+
+    <!-- Open the app on every device -->
+    <string name="open_app_on_devices">Open the app on all devices</string>
+    <string name="open_app_sent">The app opens on the student devices</string>
+    <string name="notif_open_app">Your teacher asks you to open Easy Class Share</string>
+
+    <!-- Renaming classes and schools -->
+    <string name="rename_button">Rename</string>
+    <string name="rename_class_panel">Class name</string>
+    <string name="rename_class_title">Rename class</string>
+    <string name="rename_class_text">The new name shows for all teachers and on the student devices.</string>
+    <string name="rename_school_panel">School name</string>
+    <string name="rename_school_title">Rename school</string>
+    <string name="rename_school_text">The new name shows for all admins and teachers of the school.</string>
+
+    <!-- App updates -->
+    <string name="update_title">App updates</string>
+    <string name="update_installed">Installed: version %1$s</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_up_to_date">This is the newest version.</string>
+    <string name="update_available_title">Version %1$s is available</string>
+    <string name="update_available_text">This device has version %1$s. Download the new version now? Android then asks you to confirm the update.</string>
+    <string name="update_button">Update</string>
+    <string name="update_later">Later</string>
+    <string name="update_hide">Hide</string>
+    <string name="update_downloading">Downloading the update…</string>
+    <string name="update_ready_title">Version %1$s is downloaded</string>
+    <string name="update_ready_text">Tap Install, then Update. If Android asks first, allow Easy Class Share to install apps and come back.</string>
+    <string name="update_install">Install</string>
+    <string name="update_failed">The update didn\'t work. Check the internet connection and try again.</string>
+    <string name="update_notification_text">Tap to update the app.</string>
 </resources>

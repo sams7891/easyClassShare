@@ -3,6 +3,7 @@ package com.easyclassshare.app
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
@@ -11,6 +12,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,6 +25,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
@@ -43,10 +49,14 @@ import com.easyclassshare.app.ui.StartScreen
 import com.easyclassshare.app.ui.SetupScreen
 import com.easyclassshare.app.ui.StudentClassScreen
 import com.easyclassshare.app.ui.TeacherClassScreen
+import com.easyclassshare.app.ui.UpdatePrompt
 import com.easyclassshare.app.ui.openLink
 import com.easyclassshare.app.ui.theme.EasyClassShareTheme
+import com.easyclassshare.app.ui.theme.Paper
 import com.easyclassshare.app.ui.theme.isDark
+import com.easyclassshare.app.update.AppUpdater
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -60,12 +70,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // A new language needs the screens built again; the open screen stays.
-        lifecycleScope.launch { AppSettings.language.drop(1).collect { recreate() } }
-        // Only on a fresh start - not again after a screen rotation.
+        // A new language or look needs the screens built again; the open screen stays.
+        lifecycleScope.launch { merge(AppSettings.language.drop(1), AppSettings.theme.drop(1)).collect { recreate() } }
+        // Only on a fresh start - not again after a screen rotation. Missing permissions are
+        // shown on the student screen; the Permissions screen opens by itself only after joining.
         if (savedInstanceState == null) {
             vm.screen = when {
-                LocalSetup.isStudentDevice && !DevicePermissions.allGranted(this) -> Screen.PERMISSIONS
                 LocalSetup.isStudentDevice -> Screen.STUDENT
                 LocalSetup.memberships.value.isNotEmpty() -> Screen.START
                 else -> Screen.HOME
@@ -81,7 +91,13 @@ class MainActivity : ComponentActivity() {
                 val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
             }
-            EasyClassShareTheme(dark) { EasyClassShareApp(vm, cvm) }
+            EasyClassShareTheme(dark) {
+                // Paper behind every screen: while one screen fades into the next, or the
+                // keyboard opens, the window background would otherwise shine through.
+                val paper = Paper
+                LaunchedEffect(paper) { window.setBackgroundDrawable(ColorDrawable(paper.toArgb())) }
+                Box(Modifier.fillMaxSize().background(paper)) { EasyClassShareApp(vm, cvm) }
+            }
         }
     }
 
@@ -89,6 +105,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         AppVisibility.isForeground = true
         if (LocalSetup.isStudentDevice) ClassService.start(this)
+        AppUpdater.checkInBackgroundIfDue(this)
     }
 
     override fun onStop() {
@@ -150,6 +167,7 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
     val openClass by cvm.current.collectAsState()
     val openSchool by cvm.openSchool.collectAsState()
     val isSuperAdmin by cvm.isSuperAdmin.collectAsState()
+    val studentAttention by cvm.studentAttention.collectAsState()
     var setupMode by rememberSaveable { mutableStateOf(SetupMode.NEW) }
     var settingsReturn by rememberSaveable { mutableStateOf(Screen.HOME) }
 
@@ -281,6 +299,9 @@ private fun EasyClassShareApp(vm: ClassShareViewModel, cvm: ClassViewModel) {
             }
         }
     }
+
+    // Not on top of "Eyes on me".
+    UpdatePrompt(allowed = studentAttention == null)
 
     val removed = removedFrom
     if (removed != null) {

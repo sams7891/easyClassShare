@@ -286,4 +286,36 @@
     <string name="notif_sound_on">Skaņa ir ieslēgta</string>
     <string name="notif_sound_off">Skaņa ir izslēgta (to iestatīja skolotājs)</string>
     <string name="notif_new_message">Jauns no: %1$s</string>
+
+    <!-- Open the app on every device -->
+    <string name="open_app_on_devices">Atvērt lietotni visās ierīcēs</string>
+    <string name="open_app_sent">Lietotne atveras skolēnu ierīcēs</string>
+    <string name="notif_open_app">Skolotājs lūdz atvērt Easy Class Share</string>
+
+    <!-- Renaming classes and schools -->
+    <string name="rename_button">Pārdēvēt</string>
+    <string name="rename_class_panel">Klases nosaukums</string>
+    <string name="rename_class_title">Pārdēvēt klasi</string>
+    <string name="rename_class_text">Jaunais nosaukums būs redzams visiem skolotājiem un skolēnu ierīcēs.</string>
+    <string name="rename_school_panel">Skolas nosaukums</string>
+    <string name="rename_school_title">Pārdēvēt skolu</string>
+    <string name="rename_school_text">Jaunais nosaukums būs redzams visiem skolas administratoriem un skolotājiem.</string>
+
+    <!-- App updates -->
+    <string name="update_title">Lietotnes atjauninājumi</string>
+    <string name="update_installed">Instalēta versija %1$s</string>
+    <string name="update_check">Meklēt atjauninājumus</string>
+    <string name="update_checking">Pārbauda…</string>
+    <string name="update_up_to_date">Šī ir jaunākā versija.</string>
+    <string name="update_available_title">Pieejama versija %1$s</string>
+    <string name="update_available_text">Šajā ierīcē ir versija %1$s. Lejupielādēt jauno versiju tagad? Pēc tam Android lūgs apstiprināt atjaunināšanu.</string>
+    <string name="update_button">Atjaunināt</string>
+    <string name="update_later">Vēlāk</string>
+    <string name="update_hide">Paslēpt</string>
+    <string name="update_downloading">Lejupielādē atjauninājumu…</string>
+    <string name="update_ready_title">Versija %1$s ir lejupielādēta</string>
+    <string name="update_ready_text">Pieskaries Instalēt, tad Atjaunināt. Ja Android vispirms jautā, atļauj Easy Class Share instalēt lietotnes un atgriezies.</string>
+    <string name="update_install">Instalēt</string>
+    <string name="update_failed">Atjaunināšana neizdevās. Pārbaudi interneta savienojumu un mēģini vēlreiz.</string>
+    <string name="update_notification_text">Pieskaries, lai atjauninātu lietotni.</string>
 </resources>

@@ -4,6 +4,34 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-11-27
+### Added
+- **App updates**: the app looks for a new release on GitHub (when it opens, at most
+  every 6 hours) and offers to download and install it; also *Settings → App updates
+  → Check for updates*. Student devices also get a notification. Android always asks
+  to confirm the installation, and the first time to allow the app to install apps.
+- **Open the app on all devices** (teacher screen, ⋮ menu): brings Easy Class Share
+  to the front on every student device. Devices without *Display over other apps*
+  get a notification instead.
+- **Rename classes** (Class settings) and **schools** (School settings).
+
+### Changed
+- The Permissions screen no longer opens by itself every time a student device
+  opens the app while a permission is missing; the student screen shows a
+  reminder with a button instead. It still opens right after joining a class.
+- The database rules changed (rename and "open the app"): publish the new
+  `database.rules.json` in the Firebase console before installing 1.4.0.
+
+### Fixed
+- Dark mode: the light background no longer flashes when switching screens or
+  opening the keyboard.
+- *Eyes on me* is shown in each student device's own language (it used the
+  teacher's language, also in the notification).
+- The Sound and Eyes on me buttons could stop working: they were blocked while
+  another action was still running, and their state could freeze when Firebase
+  dropped the connection to the data. They now always react, and the data
+  reconnects by itself.
+
 ## [1.3.1] - 2026-11-25
 ### Fixed
 - Muted devices: the volume buttons no longer bring the sound back for a

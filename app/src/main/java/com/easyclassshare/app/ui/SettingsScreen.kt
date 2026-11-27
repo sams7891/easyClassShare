@@ -50,7 +50,7 @@ fun SettingsButton(onClick: () -> Unit) {
     }
 }
 
-/** Language and light/dark look. Student devices also get a shortcut to their permissions. */
+/** Language, light/dark look and app updates. Student devices also get a shortcut to their permissions. */
 @Composable
 fun SettingsScreen(onBack: () -> Unit, onPermissions: (() -> Unit)?) {
     val context = LocalContext.current
@@ -107,6 +107,7 @@ fun SettingsScreen(onBack: () -> Unit, onPermissions: (() -> Unit)?) {
                         }
                     }
                 }
+                UpdatePanel()
                 if (onPermissions != null) {
                     Panel {
                         Text(stringResource(R.string.permissions_title), style = MaterialTheme.typography.titleMedium)

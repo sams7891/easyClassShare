@@ -11,11 +11,14 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.easyclassshare.app.AppVisibility
+import com.easyclassshare.app.MainActivity
+import com.easyclassshare.app.R
 import com.easyclassshare.app.online.ClassRepository
 import com.easyclassshare.app.online.LocalSetup
 import com.easyclassshare.app.online.Membership
 import com.easyclassshare.app.online.Role
 import com.easyclassshare.app.settings.AppSettings
+import com.easyclassshare.app.update.AppUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,6 +57,9 @@ class ClassService : Service() {
     private lateinit var texts: Context
     private var soundAllowedNow = true
 
+    /** Difference between the server clock and this device's clock, in milliseconds. */
+    private var serverOffset = 0L
+
     override fun attachBaseContext(base: Context) {
         plainBase = base
         texts = AppSettings.wrap(base)
@@ -71,6 +77,13 @@ class ClassService : Service() {
             startForeground(Notifications.ONGOING_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
             startForeground(Notifications.ONGOING_ID, notification)
+        }
+        scope.launch {
+            ClassRepository.serverTimeOffset().catch { }.collect { serverOffset = it }
+        }
+        scope.launch {
+            // A new app version on GitHub: tell the device (checked at most every few hours).
+            AppUpdater.checkIfDue(this@ClassService)?.let { Notifications.updateAvailable(texts, it.version) }
         }
         scope.launch {
             // Another language in Settings: show the notifications in it straight away.
@@ -121,6 +134,17 @@ class ClassService : Service() {
                 }
             }
             launch {
+                ClassRepository.openAppRequests(classId).catch { }.collect { ts ->
+                    if (ts == null) return@collect
+                    val handled = LocalSetup.lastOpenRequest(classId)
+                    if (ts <= handled) return@collect
+                    LocalSetup.setLastOpenRequest(classId, ts)
+                    // Only fresh requests: not one from yesterday when the device is switched on.
+                    val age = System.currentTimeMillis() + serverOffset - ts
+                    if (age < OPEN_REQUEST_MAX_AGE_MS) bringAppToFront()
+                }
+            }
+            launch {
                 ClassRepository.messages(classId).catch { }.collect { messages ->
                     val newest = messages.firstOrNull() ?: return@collect
                     val lastAnnounced = LocalSetup.lastAnnounced(classId)
@@ -155,16 +179,18 @@ class ClassService : Service() {
                         Notifications.cancelAttention(texts)
                         return@collect
                     }
+                    // Always in this device's language, whatever language the teacher's device uses.
+                    val text = texts.getString(R.string.attention_default_text)
                     // The accessibility lock also covers the notification shade; the normal overlay is the fallback.
-                    val shown = if (lock != null && lock.showAttention(attention.text, attention.from)) {
+                    val shown = if (lock != null && lock.showAttention(text, attention.from)) {
                         overlay.hide()
                         true
                     } else {
-                        overlay.show(attention.text, attention.from)
+                        overlay.show(text, attention.from)
                     }
                     if (!shown && !AppVisibility.isForeground) {
                         // No permission to cover the screen: the app shows it when opened.
-                        Notifications.attention(texts, attention)
+                        Notifications.attention(texts, attention.from)
                     }
                 }
             } finally {
@@ -182,6 +208,17 @@ class ClassService : Service() {
                 if (allowed) enforcer.restore() else keepMuted()
             }
         }
+    }
+
+    /**
+     * A teacher asked every device to open the app. Android lets a background app open a screen
+     * only with "Display over other apps"; without it the device gets a notification instead.
+     */
+    private fun bringAppToFront() {
+        val intent = Intent(this, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        val started = AttentionOverlay.canShow(this) && runCatching { startActivity(intent) }.isSuccess
+        if (!started && !AppVisibility.isForeground) Notifications.openAppRequest(texts)
     }
 
     /** Mutes now and keeps putting the volume back to zero until cancelled. */
@@ -254,6 +291,7 @@ class ClassService : Service() {
     companion object {
         private const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
         private const val ENFORCE_INTERVAL_MS = 200L
+        private const val OPEN_REQUEST_MAX_AGE_MS = 2 * 60_000L
 
         fun start(context: Context) {
             try {

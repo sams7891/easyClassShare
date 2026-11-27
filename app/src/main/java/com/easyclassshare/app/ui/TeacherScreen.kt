@@ -2,6 +2,7 @@ package com.easyclassshare.app.ui
 
 import android.text.format.DateFormat
 import android.text.format.DateUtils
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -121,9 +122,11 @@ fun TeacherClassScreen(
     val attention by cvm.attention.collectAsState()
     val offset by cvm.serverOffset.collectAsState()
     val now = rememberServerNow(offset)
+    val context = LocalContext.current
     var showMore by remember { mutableStateOf(false) }
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val attentionText = stringResource(R.string.attention_default_text)
+    val openAppSent = stringResource(R.string.open_app_sent)
 
     val title = className ?: membership?.className?.ifBlank { null } ?: stringResource(R.string.class_default_name)
     val online = stringResource(R.string.teacher_devices_summary, devices.count { it.online }, devices.size)
@@ -143,6 +146,16 @@ fun TeacherClassScreen(
                             Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
                         }
                         DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.open_app_on_devices)) },
+                                leadingIcon = { Icon(drawableIcon(R.drawable.ic_open_app), contentDescription = null) },
+                                onClick = {
+                                    showMore = false
+                                    cvm.openAppOnDevices {
+                                        Toast.makeText(context, openAppSent, Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.teacher_wifi_mode)) },
                                 leadingIcon = { Icon(drawableIcon(R.drawable.ic_wifi), contentDescription = null) },
@@ -166,7 +179,8 @@ fun TeacherClassScreen(
                 now = now,
                 offset = offset,
                 attentionOn = attention != null,
-                enabled = !cvm.busy,
+                // Never blocked by other actions (renaming, codes...): these are needed at any moment.
+                enabled = true,
                 onSoundOn = { cvm.setClassSound(true) },
                 onMute = { cvm.setClassSound(false) },
                 onMuteFor = cvm::muteFor,
@@ -874,8 +888,8 @@ private fun TabletRow(
             Spacer(Modifier.width(6.dp))
             Switch(
                 checked = soundAllowed,
+                // Sound is never blocked by other actions that are still running.
                 onCheckedChange = onSoundChange,
-                enabled = enabled,
                 colors = SwitchDefaults.colors(checkedTrackColor = Chalk),
             )
             Box {

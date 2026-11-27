@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -25,9 +26,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.easyclassshare.app.ClassViewModel
@@ -37,6 +40,7 @@ import com.easyclassshare.app.online.TeacherInfo
 import com.easyclassshare.app.ui.components.AppTopBar
 import com.easyclassshare.app.ui.components.Panel
 import com.easyclassshare.app.ui.components.SoftButton
+import com.easyclassshare.app.ui.components.drawableIcon
 import com.easyclassshare.app.ui.theme.Brick
 import com.easyclassshare.app.ui.theme.InkSoft
 import com.easyclassshare.app.ui.theme.Line
@@ -56,6 +60,9 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
     val teachers by cvm.teachers.collectAsState()
     val myUid by cvm.myUid.collectAsState()
     var confirm by remember { mutableStateOf<Confirm?>(null) }
+    var renaming by remember { mutableStateOf(false) }
+    val membership by cvm.current.collectAsState()
+    val shownName = className ?: membership?.className?.ifBlank { null } ?: stringResource(R.string.class_default_name)
 
     Scaffold(
         topBar = { AppTopBar(stringResource(R.string.class_settings), onBack, subtitle = className) },
@@ -66,6 +73,16 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item { ErrorText(cvm.error) }
+
+            // ---- Name
+            item {
+                NamePanel(
+                    title = stringResource(R.string.rename_class_panel),
+                    name = shownName,
+                    enabled = !cvm.busy && className != null,
+                    onRename = { cvm.clearError(); renaming = true },
+                )
+            }
 
             // ---- Codes
             item {
@@ -113,6 +130,19 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
         }
     }
 
+    if (renaming) {
+        RenameDialog(
+            title = stringResource(R.string.rename_class_title),
+            text = stringResource(R.string.rename_class_text),
+            label = stringResource(R.string.rename_class_panel),
+            icon = drawableIcon(R.drawable.ic_group),
+            initial = className.orEmpty(),
+            maxLength = 40,
+            onSave = { cvm.renameClass(it); renaming = false },
+            onDismiss = { renaming = false },
+        )
+    }
+
     confirm?.let { pending ->
         val text = when (pending) {
             is Confirm.RemoveTeacher -> stringResource(R.string.confirm_remove_teacher, pending.teacher.name)
@@ -141,6 +171,51 @@ fun ManageClassScreen(cvm: ClassViewModel, onBack: () -> Unit) {
             },
         )
     }
+}
+
+/** "Class name: 5B  [Rename]", also used for schools. */
+@Composable
+internal fun NamePanel(title: String, name: String, enabled: Boolean, onRename: () -> Unit) {
+    Panel {
+        Text(title, style = MaterialTheme.typography.titleLarge)
+        Text(name, style = MaterialTheme.typography.bodyLarge)
+        Row {
+            SoftButton(stringResource(R.string.rename_button), onRename, icon = Icons.Filled.Edit, enabled = enabled)
+        }
+    }
+}
+
+@Composable
+internal fun RenameDialog(
+    title: String,
+    text: String,
+    label: String,
+    icon: ImageVector,
+    initial: String,
+    maxLength: Int,
+    onSave: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var name by rememberSaveable { mutableStateOf(initial) }
+    val clean = name.trim()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(text, style = MaterialTheme.typography.bodyMedium, color = InkSoft)
+                KidTextField(name, { name = it.take(maxLength) }, label, icon)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(clean) }, enabled = clean.isNotEmpty() && clean != initial.trim()) {
+                Text(stringResource(R.string.save_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+    )
 }
 
 @Composable

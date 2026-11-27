@@ -11,6 +11,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.Query
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -39,6 +41,7 @@ import kotlinx.coroutines.tasks.await
  * classes/{classId}/inbox/{uid}/{id}   -> { from, content, ts, by }            (one tablet)
  * classes/{classId}/opened/{id}/{uid}  -> ts                                   (who opened it)
  * classes/{classId}/attention          -> { text, from, ts }                   ("Eyes on me")
+ * classes/{classId}/openApp            -> { from, ts }                         (open the app on every device)
  * schools/{schoolId}/info              -> { name, createdBy, createdAt }
  * schools/{schoolId}/admins/{uid}      -> { name, code, joinedAt }
  * schools/{schoolId}/classes/{classId} -> { name, code? }    (classes/{classId}/info/school = schoolId)
@@ -265,6 +268,10 @@ object ClassRepository {
     fun className(classId: String): Flow<String?> =
         classRef(classId).child("info").child("name").values().map { it.value as? String }
 
+    /** Name of the school a class belongs to (null if none). */
+    fun schoolNameOfClass(classId: String): Flow<String?> =
+        classRef(classId).child("info").child("schoolName").values().map { it.value as? String }
+
     /** Difference between the server clock and this device's clock, in milliseconds. */
     fun serverTimeOffset(): Flow<Long> =
         db.getReference(".info/serverTimeOffset").values()
@@ -450,6 +457,54 @@ object ClassRepository {
         classRef(classId).child("devices").child(deviceUid).child("name").setValue(name).await()
     }
 
+    /** Renames a class. A class in a school is also renamed in the school's class list. */
+    suspend fun renameClass(classId: String, name: String) {
+        uid()
+        classRef(classId).child("info").child("name").setValue(name).await()
+        val schoolId = classRef(classId).child("info").child("school").get().await().value as? String ?: return
+        // Teachers who aren't admins of the school need the database rules of 1.4.0 for this.
+        bestEffort { schoolRef(schoolId).child("classes").child(classId).child("name").setValue(name).await() }
+    }
+
+    /** Renames a school, and the copies of its name in its classes and in its school code. */
+    suspend fun renameSchool(schoolId: String, name: String) {
+        uid()
+        schoolRef(schoolId).child("info").child("name").setValue(name).await()
+        bestEffort {
+            val classIds = schoolRef(schoolId).child("classes").get().await().children.mapNotNull { it.key }
+            if (classIds.isNotEmpty()) {
+                root.updateChildren(HashMap<String, Any?>(classIds.associate { "classes/$it/info/schoolName" to name }))
+                    .await()
+            }
+        }
+        bestEffort {
+            val code = root.child("schoolSecrets").child(schoolId).child("teacherCode").get().await().value as? String
+            // Needs the database rules of 1.4.0.
+            if (code != null) root.child("joinCodes").child(code).child("name").setValue(name).await()
+        }
+    }
+
+    /** Asks every student device of the class to bring the app to the front. */
+    suspend fun requestOpenApp(classId: String, from: String) {
+        uid()
+        classRef(classId).child("openApp").setValue(mapOf("from" to from, "ts" to ServerValue.TIMESTAMP)).await()
+    }
+
+    /** Server time of the latest "open the app" request of the class (null = none). */
+    fun openAppRequests(classId: String): Flow<Long?> =
+        classRef(classId).child("openApp").child("ts").values().map { (it.value as? Number)?.toLong() }
+
+    /** Runs a secondary write; the main change already happened, so a failure here is not shown. */
+    private suspend fun bestEffort(block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Older database rules, or no connection: the copy is updated next time.
+        }
+    }
+
     suspend fun setAttention(classId: String, attention: Attention?) {
         uid()
         val node = classRef(classId).child("attention")
@@ -614,7 +669,22 @@ object ClassRepository {
 
     private fun <T> withUid(block: (String) -> Flow<T>): Flow<T> = flow { emitAll(block(uid())) }
 
-    private fun Query.values(): Flow<DataSnapshot> = callbackFlow {
+    /**
+     * Follows a database location. Waits for the sign-in first (the rules refuse everything
+     * before it), and if Firebase drops the listener (e.g. "permission denied" while the
+     * sign-in token is renewed) it starts listening again after a short pause. Before, the
+     * flow just ended, and the teacher's Sound and Eyes on me tiles froze at their last state
+     * until the class was opened again.
+     */
+    private fun Query.values(): Flow<DataSnapshot> = flow {
+        uid()
+        emitAll(listen())
+    }.retryWhen { _, attempt ->
+        delay(RETRY_DELAYS_MS[attempt.coerceAtMost(RETRY_DELAYS_MS.lastIndex.toLong()).toInt()])
+        true
+    }
+
+    private fun Query.listen(): Flow<DataSnapshot> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 trySend(snapshot)
@@ -629,4 +699,5 @@ object ClassRepository {
     }
 
     private const val MESSAGE_LIMIT = 50
+    private val RETRY_DELAYS_MS = longArrayOf(1_000, 2_000, 5_000, 10_000, 30_000)
 }

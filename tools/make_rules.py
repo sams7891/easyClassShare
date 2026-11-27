@@ -101,6 +101,11 @@ join_codes = {
                 all_of("data.child('classId').exists()", can_teach(code_cid_old)),
                 all_of("data.child('schoolId').exists()", is_school_admin(code_sid_old)),
             )),
+            # a school admin renames the school: the school code keeps its school and role, only the name changes
+            all_of("data.exists()", "newData.exists()", "data.child('schoolId').exists()", is_school_admin(code_sid_old),
+                   "newData.child('schoolId').val() === data.child('schoolId').val()",
+                   "newData.child('role').val() === data.child('role').val()",
+                   "!newData.child('classId').exists()"),
             # add a new code: for an existing class/school you run, or one you are creating in the same write
             all_of("!data.exists()", "newData.exists()", any_of(
                 all_of("newData.child('classId').exists()", any_of(
@@ -255,6 +260,13 @@ classes = {
                 },
             },
         },
+        "openApp": {
+            # "Open the app on all devices": student devices bring the app to the front
+            ".read": all_of(AUTH, MEMBER),
+            ".write": all_of(AUTH, T),
+            ".validate": all_of("newData.hasChildren(['from', 'ts'])", "newData.child('from').isString()",
+                                "newData.child('from').val().length <= 40", "newData.child('ts').isNumber()"),
+        },
         "attention": {
             ".read": all_of(AUTH, MEMBER),
             ".write": all_of(AUTH, T),
@@ -300,16 +312,21 @@ schools = {
         "classes": {
             ".read": all_of(AUTH, SA),
             "$cid": {
-                # An admin, or a teacher creating a class in this school (with the school code, checked below)
+                # An admin, a teacher creating a class in this school (with the school code, checked below),
+                # or a teacher of the class renaming it
                 ".write": all_of(AUTH, any_of(
                     SA,
+                    all_of("data.exists()", "newData.exists()",
+                           f"{cls('$cid')}.child('info').child('school').val() === $sid", is_teacher("$cid")),
                     all_of("!data.exists()", "newData.exists()", f"!{cls('$cid')}.exists()",
                            f"{new_cls('$cid', 4)}.child('info').child('school').val() === $sid",
                            f"{new_cls('$cid', 4)}.child('info').child('createdBy').val() === auth.uid"),
                 )),
                 ".validate": all_of(
                     "newData.hasChild('name')", name_ok(),
-                    any_of(SA, "newData.child('code').val() === root.child('schoolSecrets').child($sid).child('teacherCode').val()"),
+                    any_of(SA, "newData.child('code').val() === root.child('schoolSecrets').child($sid).child('teacherCode').val()",
+                           # renaming keeps the code it was added with
+                           all_of("data.exists()", "newData.child('code').val() === data.child('code').val()")),
                 ),
             },
         },

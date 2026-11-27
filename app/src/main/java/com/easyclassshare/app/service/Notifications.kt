@@ -14,12 +14,13 @@ import androidx.core.content.ContextCompat
 import com.easyclassshare.app.MainActivity
 import com.easyclassshare.app.R
 import com.easyclassshare.app.data.ShareMessage
-import com.easyclassshare.app.online.Attention
 
 object Notifications {
     const val ONGOING_ID = 1
     private const val MESSAGE_ID = 2
     private const val ATTENTION_ID = 3
+    private const val OPEN_APP_ID = 4
+    private const val UPDATE_ID = 5
 
     const val ACTION_OPEN_MESSAGE = "com.easyclassshare.app.OPEN_MESSAGE"
     const val EXTRA_CLASS_ID = "class_id"
@@ -79,19 +80,48 @@ object Notifications {
         context.getSystemService(NotificationManager::class.java).notify(MESSAGE_ID, notification)
     }
 
-    /** Shown when "Eyes on me" can't cover the screen because the overlay permission is missing. */
-    fun attention(context: Context, attention: Attention) {
+    /**
+     * Shown when "Eyes on me" can't cover the screen because the overlay permission is missing.
+     * The text is in this device's language; [from] is the teacher's name.
+     */
+    fun attention(context: Context, from: String) {
         if (!canNotify(context)) return
         val notification = NotificationCompat.Builder(context, CHANNEL_MESSAGES)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(attention.text)
-            .setContentText(attention.from)
+            .setContentTitle(context.getString(R.string.attention_default_text))
+            .setContentText(from)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setOngoing(true)
             .setContentIntent(openApp(context))
             .build()
         context.getSystemService(NotificationManager::class.java).notify(ATTENTION_ID, notification)
+    }
+
+    /** A teacher asked to open the app, but Android didn't let it open by itself. */
+    fun openAppRequest(context: Context) {
+        if (!canNotify(context)) return
+        val notification = NotificationCompat.Builder(context, CHANNEL_MESSAGES)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.notif_open_app))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(openApp(context))
+            .build()
+        context.getSystemService(NotificationManager::class.java).notify(OPEN_APP_ID, notification)
+    }
+
+    /** A newer version of the app is on GitHub; tapping opens the app, which offers to install it. */
+    fun updateAvailable(context: Context, version: String) {
+        if (!canNotify(context)) return
+        val notification = NotificationCompat.Builder(context, CHANNEL_CLASS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.update_available_title, version))
+            .setContentText(context.getString(R.string.update_notification_text))
+            .setAutoCancel(true)
+            .setContentIntent(openApp(context))
+            .build()
+        context.getSystemService(NotificationManager::class.java).notify(UPDATE_ID, notification)
     }
 
     fun cancelAttention(context: Context) {

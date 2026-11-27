@@ -72,6 +72,21 @@ object LocalSetup {
         publish(list.map { if (it.classId == classId) it.copy(className = className) else it })
     }
 
+    /** Keeps the saved school name of a teacher's class up to date when the school is renamed. */
+    @Synchronized
+    fun updateSchoolName(classId: String, schoolName: String) {
+        val list = _memberships.value
+        if (list.none { it.role == Role.TEACHER && it.classId == classId && it.schoolName != schoolName }) return
+        publish(list.map { if (it.role == Role.TEACHER && it.classId == classId) it.copy(schoolName = schoolName) else it })
+    }
+
+    /** Server time of the latest "open the app" request of [classId] already handled (0 = none). */
+    fun lastOpenRequest(classId: String): Long = prefs.getLong(KEY_OPEN_REQUEST + classId, 0L)
+
+    fun setLastOpenRequest(classId: String, time: Long) {
+        prefs.edit().putLong(KEY_OPEN_REQUEST + classId, time).apply()
+    }
+
     /** Server time of the newest message of [classId] already announced on this device (0 = none yet). */
     fun lastAnnounced(classId: String): Long = prefs.getLong(KEY_LAST_MESSAGE + classId, 0L)
 
@@ -152,6 +167,7 @@ object LocalSetup {
     private const val KEY_LIST = "memberships"
     private const val KEY_LAST_MESSAGE = "last_message_time_"
     private const val KEY_OPENED = "opened_ids"
+    private const val KEY_OPEN_REQUEST = "open_request_time_"
     private const val MAX_REMEMBERED_OPENED = 300
     private const val OLD_KEY_CLASS = "class_id"
     private const val OLD_KEY_ROLE = "role"
